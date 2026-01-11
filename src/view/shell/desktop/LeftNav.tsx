@@ -34,7 +34,8 @@ import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {NavSignupCard} from '#/view/shell/NavSignupCard'
 import {atoms as a, tokens, useLayoutBreakpoints, useTheme, web} from '#/alf'
 import {Button, ButtonIcon, ButtonText} from '#/components/Button'
-import {type DialogControlProps} from '#/components/Dialog'
+import {type DialogControlProps, useDialogControl} from '#/components/Dialog'
+import {CrackSettingsDialog} from '#/components/dialogs/CrackSettingsDialog'
 import {ArrowBoxLeft_Stroke2_Corner0_Rounded as LeaveIcon} from '#/components/icons/ArrowBoxLeft'
 import {
   Bell_Filled_Corner0_Rounded as BellFilled,
@@ -232,6 +233,7 @@ function SwitchMenuItems({
   const {_} = useLingui()
   const {setShowLoggedOut} = useLoggedOutViewControls()
   const closeEverything = useCloseAllActiveElements()
+  const crackSettingsControl = useDialogControl()
 
   const onAddAnotherAccount = () => {
     setShowLoggedOut(true)
@@ -239,40 +241,51 @@ function SwitchMenuItems({
   }
 
   return (
-    <Menu.Outer>
-      {accounts && accounts.length > 0 && (
-        <>
-          <Menu.Group>
-            <Menu.LabelText>
-              <Trans>Switch account</Trans>
-            </Menu.LabelText>
-            {accounts.map(other => (
-              <SwitchMenuItem
-                key={other.account.did}
-                account={other.account}
-                profile={other.profile}
-              />
-            ))}
-          </Menu.Group>
-          <Menu.Divider />
-        </>
-      )}
-      <SwitcherMenuProfileLink />
-      <Menu.Item
-        label={_(msg`Add another account`)}
-        onPress={onAddAnotherAccount}>
-        <Menu.ItemIcon icon={PlusIcon} />
-        <Menu.ItemText>
-          <Trans>Add another account</Trans>
-        </Menu.ItemText>
-      </Menu.Item>
-      <Menu.Item label={_(msg`Sign out`)} onPress={signOutPromptControl.open}>
-        <Menu.ItemIcon icon={LeaveIcon} />
-        <Menu.ItemText>
-          <Trans>Sign out</Trans>
-        </Menu.ItemText>
-      </Menu.Item>
-    </Menu.Outer>
+    <>
+      <Menu.Outer>
+        {accounts && accounts.length > 0 && (
+          <>
+            <Menu.Group>
+              <Menu.LabelText>
+                <Trans>Switch account</Trans>
+              </Menu.LabelText>
+              {accounts.map(other => (
+                <SwitchMenuItem
+                  key={other.account.did}
+                  account={other.account}
+                  profile={other.profile}
+                />
+              ))}
+            </Menu.Group>
+            <Menu.Divider />
+          </>
+        )}
+        <SwitcherMenuProfileLink />
+        <Menu.Item
+          label={_(msg`Crack settings`)}
+          onPress={crackSettingsControl.open}>
+          <Menu.ItemIcon icon={Settings} />
+          <Menu.ItemText>
+            <Trans>Crack settings</Trans>
+          </Menu.ItemText>
+        </Menu.Item>
+        <Menu.Item
+          label={_(msg`Add another account`)}
+          onPress={onAddAnotherAccount}>
+          <Menu.ItemIcon icon={PlusIcon} />
+          <Menu.ItemText>
+            <Trans>Add another account</Trans>
+          </Menu.ItemText>
+        </Menu.Item>
+        <Menu.Item label={_(msg`Sign out`)} onPress={signOutPromptControl.open}>
+          <Menu.ItemIcon icon={LeaveIcon} />
+          <Menu.ItemText>
+            <Trans>Sign out</Trans>
+          </Menu.ItemText>
+        </Menu.Item>
+      </Menu.Outer>
+      <CrackSettingsDialog control={crackSettingsControl} />
+    </>
   )
 }
 

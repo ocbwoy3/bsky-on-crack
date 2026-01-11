@@ -45,3 +45,11 @@ export function listenPostCreated(fn: () => void): UnlistenFn {
   emitter.on('post-created', fn)
   return () => emitter.off('post-created', fn)
 }
+
+export function emitOpenWelcomeModal() {
+  emitter.emit('open-welcome-modal')
+}
+export function listenOpenWelcomeModal(fn: () => void): UnlistenFn {
+  emitter.on('open-welcome-modal', fn)
+  return () => emitter.off('open-welcome-modal', fn)
+}

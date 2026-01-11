@@ -4,7 +4,7 @@ Welcome friends! This is the codebase for a fork of the Bluesky Social app.
 
 TODO:
 
-- [ ] Custom settings menu
+- [x] Crack settings API
 - [ ] Custom verifications
 - [ ] Remove labeler limit
 - [ ] Ability to turn off AppLabelers
