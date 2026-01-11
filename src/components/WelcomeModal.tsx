@@ -13,7 +13,43 @@ import {Button, ButtonText} from '#/components/Button'
 import {TimesLarge_Stroke2_Corner0_Rounded as XIcon} from '#/components/icons/Times'
 import {Text} from '#/components/Typography'
 
-const welcomeModalBg = require('../../assets/images/welcome-modal-bg.jpg')
+const welcomeModalBgSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bfe3ff"/>
+      <stop offset="55%" stop-color="#d8efff"/>
+      <stop offset="100%" stop-color="#f5f9ff"/>
+    </linearGradient>
+    <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.0"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.85"/>
+    </linearGradient>
+    <pattern id="cigPattern" width="180" height="140" patternUnits="userSpaceOnUse">
+      <g transform="translate(20 30) rotate(-10)">
+        <rect x="0" y="0" rx="6" ry="6" width="120" height="18" fill="#f3f2ee" fill-opacity="0.75"/>
+        <rect x="0" y="0" width="20" height="18" fill="#c97a3e" fill-opacity="0.85"/>
+        <rect x="96" y="0" width="24" height="18" fill="#d6d3cc" fill-opacity="0.6"/>
+        <path d="M124 -6 C136 -10 144 -2 150 -10" stroke="#cfd6e2" stroke-opacity="0.35" stroke-width="3" fill="none"/>
+        <path d="M126 -2 C136 -6 148 4 156 -2" stroke="#cfd6e2" stroke-opacity="0.25" stroke-width="2" fill="none"/>
+      </g>
+      <g transform="translate(40 90) rotate(12)">
+        <rect x="0" y="0" rx="6" ry="6" width="110" height="16" fill="#f3f2ee" fill-opacity="0.6"/>
+        <rect x="0" y="0" width="18" height="16" fill="#c97a3e" fill-opacity="0.75"/>
+        <rect x="88" y="0" width="22" height="16" fill="#d6d3cc" fill-opacity="0.5"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <rect width="1200" height="800" fill="url(#cigPattern)"/>
+  <rect y="480" width="1200" height="320" fill="url(#haze)"/>
+</svg>
+`.trim()
+
+const welcomeModalBg = {
+  uri: `data:image/svg+xml;utf8,${encodeURIComponent(welcomeModalBgSvg)}`,
+}
 
 interface WelcomeModalProps {
   control: {
