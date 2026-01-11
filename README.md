@@ -1,6 +1,7 @@
-# Bluesky On Crack
+# Bluesky on Crack
 
-Welcome friends! This is the codebase for a fork of the Bluesky Social app.
+Welcome friends! This is the codebase for a fork of the Bluesky Social app -
+Bluesky on Crack.
 
 TODO:
 
@@ -8,7 +9,7 @@ TODO:
 - [x] Custom verifications
 - [ ] Remove labeler limit
 - [ ] Ability to turn off AppLabelers
-- [ ] Constellation
+- [x] Constellation
 - [ ] Add niche features
 - [ ] Add ability to edit posts
 - [ ] Restore backdated posts
