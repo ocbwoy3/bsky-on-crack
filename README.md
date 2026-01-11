@@ -33,17 +33,15 @@ decentralized social media protocol. You don't _need_ to understand AT Protocol
 to work with this application, but it can help. Learn more at:
 
 - [Overview and Guides](https://atproto.com/guides/overview)
-- [GitHub Discussions](https://github.com/bluesky-social/atproto/discussions) 👈
-  Great place to ask questions
 - [Protocol Specifications](https://atproto.com/specs/atp)
-- [Blogpost on self-authenticating data structures](https://bsky.social/about/blog/3-6-2022-a-self-authenticating-social-protocol)
+- [Bluesky's Blogpost on self-authenticating data structures](https://bsky.social/about/blog/3-6-2022-a-self-authenticating-social-protocol)
 
 The app encompasses a set of schemas and APIs built in the overall AT Protocol
 framework. The namespace for these "Lexicons" is `app.bsky.*`.
 
 ## Contributions
 
-> Bluesky On Crack is a fork of Bluesky.. PRs welcome!
+> Bluesky On Crack is a fork of Bluesky.. PRs are welcome!
 
 **Guidelines:**
 
@@ -66,11 +64,6 @@ Please be sure to:
   systems.
 - Replace any analytics or error-collection systems with your own so we don't
   get super confused.
-
-## Security disclosures
-
-If you discover any security issues, please send an email to security@bsky.app.
-The email is automatically CC'd to the entire team and we'll respond promptly.
 
 ## Are you a developer interested in building on atproto?
 
