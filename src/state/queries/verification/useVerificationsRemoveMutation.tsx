@@ -9,6 +9,7 @@ import {until} from '#/lib/async/until'
 import {logger} from '#/logger'
 import {useUpdateProfileVerificationCache} from '#/state/queries/verification/useUpdateProfileVerificationCache'
 import {useAgent, useSession} from '#/state/session'
+import {clearCustomVerificationCacheForProfile} from '#/state/verification/custom-verification'
 import type * as bsky from '#/types/bsky'
 
 export function useVerificationsRemoveMutation() {
@@ -57,6 +58,7 @@ export function useVerificationsRemoveMutation() {
     },
     async onSuccess(_, {profile}) {
       logger.metric('verification:revoke', {}, {statsig: true})
+      clearCustomVerificationCacheForProfile(profile.did)
       await updateProfileVerificationCache({profile})
     },
   })

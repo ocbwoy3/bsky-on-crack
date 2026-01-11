@@ -23,6 +23,11 @@ import {
 } from '#/state/queries/profile'
 import {useCanGoLive} from '#/state/service-config'
 import {useSession} from '#/state/session'
+import {useVerificationState} from '#/state/verification/custom-verification'
+import {
+  useCustomVerificationEnabled,
+  useCustomVerificationTrustedList,
+} from '#/state/verification/custom-verifiers'
 import {EventStopper} from '#/view/com/util/EventStopper'
 import * as Toast from '#/view/com/util/Toast'
 import {Button, ButtonIcon} from '#/components/Button'
@@ -79,6 +84,10 @@ let ProfileMenu = ({
   const isLabelerAndNotBlocked = !!profile.associated?.labeler && !isBlocked
   const [devModeEnabled] = useDevMode()
   const verification = useFullVerificationState({profile})
+  const {state: verificationState} = useVerificationState(profile)
+  const customVerificationEnabled = useCustomVerificationEnabled()
+  const {trustedSet, addTrusted, removeTrusted} =
+    useCustomVerificationTrustedList()
   const canGoLive = useCanGoLive(currentAccount?.did)
   const status = useActorStatus(profile)
 
@@ -219,9 +228,10 @@ let ProfileMenu = ({
   const verificationCreatePromptControl = Prompt.usePromptControl()
   const verificationRemovePromptControl = Prompt.usePromptControl()
   const currentAccountVerifications =
-    profile.verification?.verifications?.filter(v => {
+    verificationState?.verifications?.filter(v => {
       return v.issuer === currentAccount?.did
     }) ?? []
+  const isTrustedVerifier = trustedSet.has(profile.did)
 
   return (
     <EventStopper onKeyDown={false}>
@@ -377,6 +387,35 @@ let ProfileMenu = ({
                       <Menu.ItemIcon icon={CircleCheckIcon} />
                     </Menu.Item>
                   ))}
+                {customVerificationEnabled && !isSelf && (
+                  <Menu.Item
+                    testID="profileHeaderDropdownTrustVerifierButton"
+                    label={
+                      isTrustedVerifier
+                        ? _(msg`Untrust verifier`)
+                        : _(msg`Trust verifier`)
+                    }
+                    onPress={() => {
+                      if (isTrustedVerifier) {
+                        removeTrusted(profile.did)
+                        Toast.show(_(msg`Verifier untrusted`))
+                      } else {
+                        addTrusted(profile.did)
+                        Toast.show(_(msg`Verifier trusted`))
+                      }
+                    }}>
+                    <Menu.ItemText>
+                      {isTrustedVerifier ? (
+                        <Trans>Untrust verifier</Trans>
+                      ) : (
+                        <Trans>Trust verifier</Trans>
+                      )}
+                    </Menu.ItemText>
+                    <Menu.ItemIcon
+                      icon={isTrustedVerifier ? PersonX : PersonCheck}
+                    />
+                  </Menu.Item>
+                )}
                 {!isSelf && (
                   <>
                     {!profile.viewer?.blocking &&

@@ -3,6 +3,7 @@ import {useMemo} from 'react'
 import {usePreferencesQuery} from '#/state/queries/preferences'
 import {useCurrentAccountProfile} from '#/state/queries/useCurrentAccountProfile'
 import {useSession} from '#/state/session'
+import {useVerificationState} from '#/state/verification/custom-verification'
 import type * as bsky from '#/types/bsky'
 
 export type FullVerificationState = {
@@ -36,9 +37,10 @@ export function useFullVerificationState({
   const viewerState = useSimpleVerificationState({
     profile: currentAccountProfile,
   })
+  const {state: verificationState} = useVerificationState(profile)
 
   return useMemo(() => {
-    const verifications = profile.verification?.verifications || []
+    const verifications = verificationState?.verifications || []
     const wasVerified =
       profileState.role === 'default' &&
       !profileState.isVerified &&
@@ -69,7 +71,7 @@ export function useFullVerificationState({
               isVerified: viewerState.isVerified,
             },
     }
-  }, [profile, currentAccount, profileState, viewerState])
+  }, [profile, currentAccount, profileState, viewerState, verificationState])
 }
 
 export type SimpleVerificationState = {
@@ -84,12 +86,13 @@ export function useSimpleVerificationState({
   profile?: bsky.profile.AnyProfileView
 }): SimpleVerificationState {
   const preferences = usePreferencesQuery()
+  const {state: verificationState} = useVerificationState(profile)
   const prefs = useMemo(
     () => preferences.data?.verificationPrefs || {hideBadges: false},
     [preferences.data?.verificationPrefs],
   )
   return useMemo(() => {
-    if (!profile || !profile.verification) {
+    if (!profile || !verificationState) {
       return {
         role: 'default',
         isVerified: false,
@@ -97,7 +100,7 @@ export function useSimpleVerificationState({
       }
     }
 
-    const {verifiedStatus, trustedVerifierStatus} = profile.verification
+    const {verifiedStatus, trustedVerifierStatus} = verificationState
     const isVerifiedUser = ['valid', 'invalid'].includes(verifiedStatus)
     const isVerifierUser = ['valid', 'invalid'].includes(trustedVerifierStatus)
     const isVerified =
@@ -109,5 +112,5 @@ export function useSimpleVerificationState({
       isVerified,
       showBadge: prefs.hideBadges ? false : isVerified,
     }
-  }, [profile, prefs])
+  }, [profile, prefs, verificationState])
 }

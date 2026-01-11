@@ -125,6 +125,7 @@ const schema = z.object({
     .object({
       kawaiiMode: z.boolean().optional(),
       showWelcomeModal: z.boolean().optional(),
+      customVerificationsEnabled: z.boolean().optional(),
     })
     .optional(),
   hasCheckedForStarterPack: z.boolean().optional(),
@@ -179,6 +180,7 @@ export const defaults: Schema = {
   crackSettings: {
     kawaiiMode: false,
     showWelcomeModal: true,
+    customVerificationsEnabled: false,
   },
   hasCheckedForStarterPack: false,
   subtitlesEnabled: true,

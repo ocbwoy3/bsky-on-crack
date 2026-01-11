@@ -6,6 +6,7 @@ export type CrackSettingKey = keyof CrackSettings
 export const crackSettingsDefaults: CrackSettings = {
   kawaiiMode: false,
   showWelcomeModal: true,
+  customVerificationsEnabled: false,
 }
 
 export type CrackSettingsToggleItem = {
@@ -45,6 +46,19 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         key: 'kawaiiMode',
         label: 'Kawaii mode',
         description: 'Swap in the cute logo.',
+      },
+    ],
+  },
+  {
+    id: 'verification',
+    title: 'Verification',
+    description: 'Experimental verification tweaks.',
+    items: [
+      {
+        type: 'toggle',
+        key: 'customVerificationsEnabled',
+        label: 'Custom verifications',
+        description: 'Use trusted verifiers you choose instead of defaults.',
       },
     ],
   },

@@ -9,6 +9,7 @@ import {logger} from '#/logger'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useProfileQuery} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
+import {useVerificationState} from '#/state/verification/custom-verification'
 import {atoms as a, useBreakpoints, useTheme} from '#/alf'
 import {Admonition} from '#/components/Admonition'
 import {Button, ButtonIcon, ButtonText} from '#/components/Button'
@@ -57,6 +58,9 @@ function Inner({
   const t = useTheme()
   const {_} = useLingui()
   const {gtMobile} = useBreakpoints()
+  const {state: customVerificationState} = useVerificationState(profile)
+  const effectiveVerificationState =
+    customVerificationState ?? profile.verification
 
   const userName = getUserDisplayName(profile)
   const label = state.profile.isViewer
@@ -97,14 +101,14 @@ function Inner({
         </Text>
       </View>
 
-      {profile.verification ? (
+      {effectiveVerificationState ? (
         <View style={[a.pb_xl, a.gap_md]}>
           <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
             <Trans>Verified by:</Trans>
           </Text>
 
           <View style={[a.gap_lg]}>
-            {profile.verification.verifications.map(v => (
+            {effectiveVerificationState.verifications.map(v => (
               <VerifierCard
                 key={v.uri}
                 verification={v}
@@ -114,7 +118,7 @@ function Inner({
             ))}
           </View>
 
-          {profile.verification.verifications.some(v => !v.isValid) &&
+          {effectiveVerificationState.verifications.some(v => !v.isValid) &&
             state.profile.isViewer && (
               <Admonition type="warning" style={[a.mt_xs]}>
                 <Trans>Some of your verifications are invalid.</Trans>

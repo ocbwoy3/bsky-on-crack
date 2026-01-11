@@ -60,6 +60,7 @@ export type Device = {
 export type Account = {
   searchTermHistory?: string[]
   searchAccountHistory?: string[]
+  trustedVerifiers?: string[]
 
   /**
    * The ISO date string of when this account's birthdate was last updated on

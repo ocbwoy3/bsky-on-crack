@@ -23,6 +23,7 @@ import {
   ChevronBottom_Stroke2_Corner0_Rounded as ChevronDownIcon,
   ChevronTop_Stroke2_Corner0_Rounded as ChevronUpIcon,
 } from '#/components/icons/Chevron'
+import {CircleCheck_Stroke2_Corner0_Rounded as CircleCheckIcon} from '#/components/icons/CircleCheck'
 import {Sparkle_Stroke2_Corner0_Rounded as SparkleIcon} from '#/components/icons/Sparkle'
 import {TimesLarge_Stroke2_Corner0_Rounded as XIcon} from '#/components/icons/Times'
 import {Window_Stroke2_Corner2_Rounded as WindowIcon} from '#/components/icons/Window'
@@ -85,7 +86,7 @@ export function CrackSettingsDialog({
               <Trans>Crack settings</Trans>
             </Text>
             <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
-              <Trans>Customize the extra bits in this fork.</Trans>
+              <Trans>Bluesky on Crack - by @ocbwoy3.dev!</Trans>
             </Text>
           </View>
           <Button
@@ -124,7 +125,11 @@ export function CrackSettingsDialog({
                     {section.items.map(item => {
                       if (item.type === 'toggle') {
                         const icon =
-                          item.key === 'kawaiiMode' ? SparkleIcon : WindowIcon
+                          item.key === 'kawaiiMode'
+                            ? SparkleIcon
+                            : item.key === 'customVerificationsEnabled'
+                              ? CircleCheckIcon
+                              : WindowIcon
                         const value = settings[item.key]
                         return (
                           <Toggle.Item
