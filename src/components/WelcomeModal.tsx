@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {Pressable, View} from 'react-native'
+import {View} from 'react-native'
 import {ImageBackground} from 'expo-image'
 import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
@@ -28,7 +28,6 @@ export function WelcomeModal({control}: WelcomeModalProps) {
   const {requestSwitchToAccount} = useLoggedOutViewControls()
   const {gtMobile} = useBreakpoints()
   const [isExiting, setIsExiting] = useState(false)
-  const [signInLinkHovered, setSignInLinkHovered] = useState(false)
 
   const fadeOutAndClose = (callback?: () => void) => {
     setIsExiting(true)
@@ -43,12 +42,6 @@ export function WelcomeModal({control}: WelcomeModalProps) {
       logger.metric('welcomeModal:presented', {})
     }
   }, [control.isOpen])
-
-  const onPressCreateAccount = () => {
-    logger.metric('welcomeModal:signupClicked', {})
-    control.close()
-    requestSwitchToAccount({requestedAccount: 'new'})
-  }
 
   const onPressExplore = () => {
     logger.metric('welcomeModal:exploreClicked', {})
@@ -104,7 +97,7 @@ export function WelcomeModal({control}: WelcomeModalProps) {
                   a.p_0,
                 ]}>
                 <View style={[a.flex_row, a.align_center, a.gap_xs]}>
-                  <Logo width={26} />
+                  <Logo width={26 * 2} />
                   <Text
                     style={[
                       a.text_2xl,
@@ -112,7 +105,8 @@ export function WelcomeModal({control}: WelcomeModalProps) {
                       a.user_select_none,
                       {color: '#354358', letterSpacing: -0.5},
                     ]}>
-                    Bluesky
+                    {' '}
+                    "Bluesky on Crack"
                   </Text>
                 </View>
               </View>
@@ -151,8 +145,8 @@ export function WelcomeModal({control}: WelcomeModalProps) {
               <View style={[a.gap_md, a.align_center]}>
                 <View>
                   <Button
-                    onPress={onPressCreateAccount}
-                    label={_(msg`Create account`)}
+                    onPress={onPressSignIn}
+                    label={_(msg`Sign in`)}
                     size="large"
                     color="primary"
                     style={{
@@ -160,7 +154,7 @@ export function WelcomeModal({control}: WelcomeModalProps) {
                       backgroundColor: '#006AFF',
                     }}>
                     <ButtonText>
-                      <Trans>Create account</Trans>
+                      <Trans>Sign in</Trans>
                     </ButtonText>
                   </Button>
                   <Button
@@ -182,30 +176,18 @@ export function WelcomeModal({control}: WelcomeModalProps) {
                 <View style={[a.align_center, {minWidth: 200}]}>
                   <Text
                     style={[
-                      a.text_md,
+                      a.text_sm,
                       a.text_center,
-                      {color: '#405168', lineHeight: 24},
+                      {color: '#313F54', lineHeight: 16},
                     ]}>
-                    <Trans>Already have an account?</Trans>{' '}
-                    <Pressable
-                      onPointerEnter={() => setSignInLinkHovered(true)}
-                      onPointerLeave={() => setSignInLinkHovered(false)}
-                      accessibilityRole="button"
-                      accessibilityLabel={_(msg`Sign in`)}
-                      accessibilityHint="">
-                      <Text
-                        style={[
-                          a.font_medium,
-                          {
-                            color: '#006AFF',
-                            fontSize: undefined,
-                          },
-                          signInLinkHovered && a.underline,
-                        ]}
-                        onPress={onPressSignIn}>
-                        <Trans>Sign in</Trans>
-                      </Text>
-                    </Pressable>
+                    <Trans>
+                      This is a third-party modification of Bluesky's Social
+                      App.
+                      <br />
+                      We claim no association with Bluesky Social PBC.
+                      <br />
+                      Use at your own risk.
+                    </Trans>
                   </Text>
                 </View>
               </View>

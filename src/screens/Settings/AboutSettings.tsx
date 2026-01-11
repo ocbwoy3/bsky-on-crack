@@ -1,5 +1,5 @@
 import {useMemo} from 'react'
-import {Platform} from 'react-native'
+import {Platform, View} from 'react-native'
 import {setStringAsync} from 'expo-clipboard'
 import * as FileSystem from 'expo-file-system/legacy'
 import {Image} from 'expo-image'
@@ -13,7 +13,9 @@ import {STATUS_PAGE_URL} from '#/lib/constants'
 import {type CommonNavigatorParams} from '#/lib/routes/types'
 import {isAndroid, isIOS, isNative} from '#/platform/detection'
 import * as Toast from '#/view/com/util/Toast'
+import {Logo} from '#/view/icons/Logo'
 import * as SettingsList from '#/screens/Settings/components/SettingsList'
+import {atoms as a} from '#/alf'
 import {Atom_Stroke2_Corner0_Rounded as AtomIcon} from '#/components/icons/Atom'
 import {BroomSparkle_Stroke2_Corner2_Rounded as BroomSparkleIcon} from '#/components/icons/BroomSparkle'
 import {CodeLines_Stroke2_Corner2_Rounded as CodeLinesIcon} from '#/components/icons/CodeLines'
@@ -22,6 +24,7 @@ import {Newspaper_Stroke2_Corner2_Rounded as NewspaperIcon} from '#/components/i
 import {Wrench_Stroke2_Corner2_Rounded as WrenchIcon} from '#/components/icons/Wrench'
 import * as Layout from '#/components/Layout'
 import {Loader} from '#/components/Loader'
+import {Text} from '#/components/Typography'
 import * as env from '#/env'
 import {useDemoMode} from '#/storage/hooks/demo-mode'
 import {useDevMode} from '#/storage/hooks/dev-mode'
@@ -79,6 +82,30 @@ export function AboutSettingsScreen({}: Props) {
       </Layout.Header.Outer>
       <Layout.Content>
         <SettingsList.Container>
+          <View
+            style={{
+              alignItems: 'center',
+              flex: 1,
+              justifyContent: 'center',
+              paddingVertical: 16,
+              gap: 4,
+            }}>
+            <Logo width={96} style={[{paddingBottom: 16}]} />
+            <Text style={[a.text_3xl]}>Bluesky on Crack</Text>
+            <Text style={[a.text_lg, {paddingBottom: 16}]}>
+              because why not
+            </Text>
+            <Text>
+              <Trans>
+                This is a third-party modification of Bluesky's Social App.
+                <br />
+                We claim no association with Bluesky Social PBC.
+                <br />
+                Use at your own risk.
+              </Trans>
+            </Text>
+          </View>
+          <SettingsList.Divider />
           <SettingsList.LinkItem
             to="https://bsky.social/about/support/tos"
             label={_(msg`Terms of Service`)}>
