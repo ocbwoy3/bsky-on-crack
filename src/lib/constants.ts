@@ -47,14 +47,10 @@ export function FEEDBACK_FORM_URL({
   email?: string
   handle?: string
 }): string {
-  let str = BASE_FEEDBACK_FORM_URL
-  if (email) {
-    str += `?tf_anonymous_requester_email=${encodeURIComponent(email)}`
-    if (handle) {
-      str += `&tf_17205412673421=${encodeURIComponent(handle)}`
-    }
-  }
-  return str
+  let _str = BASE_FEEDBACK_FORM_URL
+  let _email = email
+  let _handle = handle
+  return 'https://github.com/ocbwoy3/bsky-on-crack/issues'
 }
 
 export const MAX_DISPLAY_NAME = 64

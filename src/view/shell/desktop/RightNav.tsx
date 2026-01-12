@@ -93,6 +93,13 @@ export function DesktopRightNav({routeName}: {routeName: string}) {
       {showTrending && <SidebarTrendingTopics />}
 
       <Text style={[a.leading_snug, t.atoms.text_contrast_low]}>
+        <InlineLinkText
+          to="https://github.com/ocbwoy3/bsky-on-crack"
+          style={[t.atoms.text_contrast_medium]}
+          label={_(msg`Bluesky on Crack`)}>
+          {_(msg`Bluesky on Crack`)} ({process.env.EXPO_PLATFORM ?? 'web'})
+        </InlineLinkText>
+        <Text style={[t.atoms.text_contrast_low]}>{'\n'}</Text>
         {hasSession && (
           <>
             <InlineLinkText
@@ -127,6 +134,16 @@ export function DesktopRightNav({routeName}: {routeName: string}) {
           style={[t.atoms.text_contrast_medium]}>
           {_(msg`Help`)}
         </InlineLinkText>
+        <Text style={[t.atoms.text_contrast_medium, a.text_xs]}>{'\n\n'}</Text>
+        <Text style={[t.atoms.text_contrast_medium, a.text_xs]}>
+          Third-party modification of Bluesky:{'\n'}
+        </Text>
+        <Text style={[t.atoms.text_contrast_medium, a.text_xs]}>
+          Not endorsed by Bluesky Social PBC,{'\n'}
+        </Text>
+        <Text style={[t.atoms.text_contrast_medium, a.text_xs]}>
+          Use at your own risk.
+        </Text>
       </Text>
 
       {kawaii && (

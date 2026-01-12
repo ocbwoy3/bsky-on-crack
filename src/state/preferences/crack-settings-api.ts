@@ -63,6 +63,20 @@ export const crackSettingsSections: CrackSettingsSection[] = [
     ],
   },
   {
+    id: 'help',
+    title: 'Help',
+    description: 'Quick access to help dialogs.',
+    items: [
+      {
+        type: 'button',
+        id: 'openSettingsHelpModal',
+        label: 'Settings help modal',
+        description: 'Show the settings help instructions.',
+        buttonLabel: 'Open',
+      },
+    ],
+  },
+  {
     id: 'web',
     title: 'Web',
     description: 'Behavior only used on the web client.',

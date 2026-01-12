@@ -4,7 +4,7 @@ import {useReducedMotion} from 'react-native-reanimated'
 import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 
-import {emitOpenWelcomeModal} from '#/state/events'
+import {emitOpenSettingsHelpModal, emitOpenWelcomeModal} from '#/state/events'
 import {
   type CrackSettings,
   type CrackSettingsButtonItem,
@@ -71,6 +71,9 @@ export function CrackSettingsDialog({
       case 'openWelcomeModal':
         emitOpenWelcomeModal()
         break
+      case 'openSettingsHelpModal':
+        emitOpenSettingsHelpModal()
+        break
     }
   }, [])
 
@@ -86,7 +89,7 @@ export function CrackSettingsDialog({
               <Trans>Crack settings</Trans>
             </Text>
             <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
-              <Trans>Bluesky on Crack - by @ocbwoy3.dev!</Trans>
+              <Trans>Exactly what it sounds like</Trans>
             </Text>
           </View>
           <Button

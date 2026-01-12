@@ -28,12 +28,14 @@ import {Takendown} from '#/screens/Takendown'
 import {atoms as a, select, useTheme} from '#/alf'
 import {setSystemUITheme} from '#/alf/util/systemUI'
 import {AgeAssuranceRedirectDialog} from '#/components/ageAssurance/AgeAssuranceRedirectDialog'
+import {SettingsHowToDialog} from '#/components/CrackComponents/SettingsHowTo'
 import {EmailDialog} from '#/components/dialogs/EmailDialog'
 import {InAppBrowserConsentDialog} from '#/components/dialogs/InAppBrowserConsent'
 import {LinkWarningDialog} from '#/components/dialogs/LinkWarning'
 import {MutedWordsDialog} from '#/components/dialogs/MutedWords'
 import {NuxDialogs} from '#/components/dialogs/nuxs'
 import {SigninDialog} from '#/components/dialogs/Signin'
+import {useSettingsHelpModal} from '#/components/hooks/useSettingsHelpModal'
 import {GlobalReportDialog} from '#/components/moderation/ReportDialog'
 import {
   Outlet as PolicyUpdateOverlayPortalOutlet,
@@ -53,6 +55,7 @@ function ShellInner() {
   const winDim = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const {state: policyUpdateState} = usePolicyUpdateContext()
+  const settingsHelpControl = useSettingsHelpModal()
 
   const closeAnyActiveElement = useCloseAnyActiveElement()
 
@@ -119,6 +122,7 @@ function ShellInner() {
       <Lightbox />
       <NuxDialogs />
       <GlobalReportDialog />
+      <SettingsHowToDialog control={settingsHelpControl} />
 
       {/* Until policy update has been completed by the user, don't render anything that is portaled */}
       {policyUpdateState.completed && (

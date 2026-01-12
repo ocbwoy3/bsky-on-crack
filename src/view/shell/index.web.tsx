@@ -18,11 +18,13 @@ import {Deactivated} from '#/screens/Deactivated'
 import {Takendown} from '#/screens/Takendown'
 import {atoms as a, select, useBreakpoints, useTheme} from '#/alf'
 import {AgeAssuranceRedirectDialog} from '#/components/ageAssurance/AgeAssuranceRedirectDialog'
+import {SettingsHowToDialog} from '#/components/CrackComponents/SettingsHowTo'
 import {EmailDialog} from '#/components/dialogs/EmailDialog'
 import {LinkWarningDialog} from '#/components/dialogs/LinkWarning'
 import {MutedWordsDialog} from '#/components/dialogs/MutedWords'
 import {NuxDialogs} from '#/components/dialogs/nuxs'
 import {SigninDialog} from '#/components/dialogs/Signin'
+import {useSettingsHelpModal} from '#/components/hooks/useSettingsHelpModal'
 import {useWelcomeModal} from '#/components/hooks/useWelcomeModal'
 import {GlobalReportDialog} from '#/components/moderation/ReportDialog'
 import {
@@ -43,6 +45,7 @@ function ShellInner() {
   const closeAllActiveElements = useCloseAllActiveElements()
   const {state: policyUpdateState} = usePolicyUpdateContext()
   const welcomeModalControl = useWelcomeModal()
+  const settingsHelpControl = useSettingsHelpModal()
 
   useComposerKeyboardShortcut()
   useIntentHandler()
@@ -79,6 +82,7 @@ function ShellInner() {
       {welcomeModalControl.isOpen && (
         <WelcomeModal control={welcomeModalControl} />
       )}
+      <SettingsHowToDialog control={settingsHelpControl} />
 
       {/* Until policy update has been completed by the user, don't render anything that is portaled */}
       {policyUpdateState.completed && (

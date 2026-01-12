@@ -53,3 +53,11 @@ export function listenOpenWelcomeModal(fn: () => void): UnlistenFn {
   emitter.on('open-welcome-modal', fn)
   return () => emitter.off('open-welcome-modal', fn)
 }
+
+export function emitOpenSettingsHelpModal() {
+  emitter.emit('open-settings-help-modal')
+}
+export function listenOpenSettingsHelpModal(fn: () => void): UnlistenFn {
+  emitter.on('open-settings-help-modal', fn)
+  return () => emitter.off('open-settings-help-modal', fn)
+}
