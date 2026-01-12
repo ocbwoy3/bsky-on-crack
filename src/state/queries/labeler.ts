@@ -4,6 +4,7 @@ import {z} from 'zod'
 
 import {MAX_LABELERS} from '#/lib/constants'
 import {labelersDetailedInfoQueryKeyRoot} from '#/lib/react-query'
+import {useCrackSettings} from '#/state/preferences'
 import {STALE} from '#/state/queries'
 import {
   preferencesQueryKey,
@@ -82,6 +83,7 @@ export function useLabelerSubscriptionMutation() {
   const queryClient = useQueryClient()
   const agent = useAgent()
   const preferences = usePreferencesQuery()
+  const {uncapLabelerLimit} = useCrackSettings()
 
   return useMutation({
     async mutationFn({did, subscribe}: {did: string; subscribe: boolean}) {
@@ -127,7 +129,7 @@ export function useLabelerSubscriptionMutation() {
 
       if (subscribe) {
         const labelerCount = labelerDids.length - invalidLabelers.length
-        if (labelerCount >= MAX_LABELERS) {
+        if (!uncapLabelerLimit && labelerCount >= MAX_LABELERS) {
           throw new Error('MAX_LABELERS')
         }
         await agent.addLabeler(did)

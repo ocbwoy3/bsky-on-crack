@@ -7,6 +7,7 @@ export const crackSettingsDefaults: CrackSettings = {
   kawaiiMode: false,
   showWelcomeModal: true,
   customVerificationsEnabled: false,
+  uncapLabelerLimit: false,
 }
 
 export type CrackSettingsToggleItem = {
@@ -63,9 +64,22 @@ export const crackSettingsSections: CrackSettingsSection[] = [
     ],
   },
   {
-    id: 'help',
-    title: 'Help',
-    description: 'Quick access to help dialogs.',
+    id: 'moderation',
+    title: 'Moderation',
+    description: 'Extra moderation controls.',
+    items: [
+      {
+        type: 'toggle',
+        key: 'uncapLabelerLimit',
+        label: 'Uncap labeler limit',
+        description: 'Allow more than twenty labeler subscriptions.',
+      },
+    ],
+  },
+  {
+    id: 'nux',
+    title: 'NUX',
+    description: 'New user stuff',
     items: [
       {
         type: 'button',
@@ -74,13 +88,6 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         description: 'Show the settings help instructions.',
         buttonLabel: 'Open',
       },
-    ],
-  },
-  {
-    id: 'web',
-    title: 'Web',
-    description: 'Behavior only used on the web client.',
-    items: [
       {
         type: 'button',
         id: 'openWelcomeModal',

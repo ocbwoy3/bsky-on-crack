@@ -126,6 +126,7 @@ const schema = z.object({
       kawaiiMode: z.boolean().optional(),
       showWelcomeModal: z.boolean().optional(),
       customVerificationsEnabled: z.boolean().optional(),
+      uncapLabelerLimit: z.boolean().optional(),
     })
     .optional(),
   hasCheckedForStarterPack: z.boolean().optional(),
@@ -181,6 +182,7 @@ export const defaults: Schema = {
     kawaiiMode: false,
     showWelcomeModal: true,
     customVerificationsEnabled: false,
+    uncapLabelerLimit: false,
   },
   hasCheckedForStarterPack: false,
   subtitlesEnabled: true,

@@ -1,5 +1,6 @@
 import {Fragment, useCallback} from 'react'
 import {Linking, View} from 'react-native'
+import * as Clipboard from 'expo-clipboard'
 import {LABELS} from '@atproto/api'
 import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
@@ -13,6 +14,7 @@ import {
 import {logger} from '#/logger'
 import {isIOS} from '#/platform/detection'
 import {useIsBirthdateUpdateAllowed} from '#/state/birthdate'
+import {useCrackSettings} from '#/state/preferences'
 import {
   useMyLabelersQuery,
   usePreferencesQuery,
@@ -21,11 +23,12 @@ import {
 } from '#/state/queries/preferences'
 import {isNonConfigurableModerationAuthority} from '#/state/session/additional-moderation-authorities'
 import {useSetMinimalShellMode} from '#/state/shell'
+import * as Toast from '#/view/com/util/Toast'
 import {atoms as a, useBreakpoints, useTheme, type ViewStyleProp} from '#/alf'
 import {Admonition} from '#/components/Admonition'
 import {AgeAssuranceAdmonition} from '#/components/ageAssurance/AgeAssuranceAdmonition'
 import {useAgeAssuranceCopy} from '#/components/ageAssurance/useAgeAssuranceCopy'
-import {Button} from '#/components/Button'
+import {Button, ButtonText} from '#/components/Button'
 import {useGlobalDialogsControlContext} from '#/components/dialogs/Context'
 import {Divider} from '#/components/Divider'
 import * as Toggle from '#/components/forms/Toggle'
@@ -166,6 +169,7 @@ export function ModerationScreenInner({
     data: labelers,
     error: labelersError,
   } = useMyLabelersQuery()
+  const {uncapLabelerLimit} = useCrackSettings()
   const aa = useAgeAssurance()
   const isBirthdateUpdateAllowed = useIsBirthdateUpdateAllowed()
   const aaCopy = useAgeAssuranceCopy()
@@ -204,6 +208,16 @@ export function ModerationScreenInner({
     },
     [setAdultContentPref],
   )
+
+  const onCopyLabelerDids = useCallback(async () => {
+    if (!labelers?.length) return
+    await Clipboard.setStringAsync(
+      labelers.map(labeler => labeler.creator.did).join('\n'),
+    )
+    Toast.show(_(msg`Copied labeler DIDs to clipboard`))
+  }, [labelers, _])
+
+  const canCopyLabelerDids = !!labelers?.length
 
   return (
     <View style={[a.pt_2xl, a.px_lg, gtMobile && a.px_2xl]}>
@@ -428,16 +442,33 @@ export function ModerationScreenInner({
         </View>
       </View>
 
-      <Text
+      <View
         style={[
-          a.text_md,
-          a.font_semi_bold,
           a.pt_2xl,
           a.pb_md,
-          t.atoms.text_contrast_high,
+          a.flex_row,
+          a.align_center,
+          a.justify_between,
+          a.gap_md,
         ]}>
-        <Trans>Advanced</Trans>
-      </Text>
+        <Text style={[a.text_md, a.font_semi_bold, t.atoms.text_contrast_high]}>
+          <Trans>Advanced</Trans>
+        </Text>
+        {uncapLabelerLimit && (
+          <Button
+            label={_(msg`Copy labeler DIDs to clipboard`)}
+            size="tiny"
+            shape="rectangular"
+            variant="outline"
+            color="secondary"
+            disabled={!canCopyLabelerDids}
+            onPress={onCopyLabelerDids}>
+            <ButtonText>
+              <Trans>Copy labeler DIDs</Trans>
+            </ButtonText>
+          </Button>
+        )}
+      </View>
 
       {isLabelersLoading ? (
         <View style={[a.w_full, a.align_center, a.p_lg]}>
