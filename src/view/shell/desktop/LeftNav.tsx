@@ -34,8 +34,7 @@ import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {NavSignupCard} from '#/view/shell/NavSignupCard'
 import {atoms as a, tokens, useLayoutBreakpoints, useTheme, web} from '#/alf'
 import {Button, ButtonIcon, ButtonText} from '#/components/Button'
-import {type DialogControlProps, useDialogControl} from '#/components/Dialog'
-import {CrackSettingsDialog} from '#/components/dialogs/CrackSettingsDialog'
+import {type DialogControlProps} from '#/components/Dialog'
 import {ArrowBoxLeft_Stroke2_Corner0_Rounded as LeaveIcon} from '#/components/icons/ArrowBoxLeft'
 import {
   Bell_Filled_Corner0_Rounded as BellFilled,
@@ -46,6 +45,7 @@ import {
   BulletList_Filled_Corner0_Rounded as ListFilled,
   BulletList_Stroke2_Corner0_Rounded as List,
 } from '#/components/icons/BulletList'
+import {CodeBrackets_Stroke2_Corner2_Rounded as CodeBrackets} from '#/components/icons/CodeBrackets'
 import {DotGrid_Stroke2_Corner0_Rounded as EllipsisIcon} from '#/components/icons/DotGrid'
 import {EditBig_Stroke2_Corner0_Rounded as EditBig} from '#/components/icons/EditBig'
 import {
@@ -233,12 +233,17 @@ function SwitchMenuItems({
   const {_} = useLingui()
   const {setShowLoggedOut} = useLoggedOutViewControls()
   const closeEverything = useCloseAllActiveElements()
-  const crackSettingsControl = useDialogControl()
+  const navigation = useNavigation<NavigationProp>()
 
   const onAddAnotherAccount = () => {
     setShowLoggedOut(true)
     closeEverything()
   }
+
+  const onCrackSettingsPress = useCallback(() => {
+    closeEverything()
+    navigation.navigate('CrackSettings')
+  }, [closeEverything, navigation])
 
   return (
     <>
@@ -263,8 +268,8 @@ function SwitchMenuItems({
         <SwitcherMenuProfileLink />
         <Menu.Item
           label={_(msg`Crack settings`)}
-          onPress={crackSettingsControl.open}>
-          <Menu.ItemIcon icon={Settings} />
+          onPress={onCrackSettingsPress}>
+          <Menu.ItemIcon icon={CodeBrackets} />
           <Menu.ItemText>
             <Trans>Crack settings</Trans>
           </Menu.ItemText>
@@ -284,7 +289,6 @@ function SwitchMenuItems({
           </Menu.ItemText>
         </Menu.Item>
       </Menu.Outer>
-      <CrackSettingsDialog control={crackSettingsControl} />
     </>
   )
 }

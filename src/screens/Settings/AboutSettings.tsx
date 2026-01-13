@@ -15,7 +15,7 @@ import {isAndroid, isIOS, isNative} from '#/platform/detection'
 import * as Toast from '#/view/com/util/Toast'
 import {Logo} from '#/view/icons/Logo'
 import * as SettingsList from '#/screens/Settings/components/SettingsList'
-import {atoms as a} from '#/alf'
+import {atoms as a, useTheme} from '#/alf'
 import {Atom_Stroke2_Corner0_Rounded as AtomIcon} from '#/components/icons/Atom'
 import {BroomSparkle_Stroke2_Corner2_Rounded as BroomSparkleIcon} from '#/components/icons/BroomSparkle'
 import {CodeLines_Stroke2_Corner2_Rounded as CodeLinesIcon} from '#/components/icons/CodeLines'
@@ -33,6 +33,7 @@ import {OTAInfo} from './components/OTAInfo'
 type Props = NativeStackScreenProps<CommonNavigatorParams, 'AboutSettings'>
 export function AboutSettingsScreen({}: Props) {
   const {_, i18n} = useLingui()
+  const t = useTheme()
   const [devModeEnabled, setDevModeEnabled] = useDevMode()
   const [demoModeEnabled, setDemoModeEnabled] = useDemoMode()
   const stableID = useMemo(() => Statsig.getStableID(), [])
@@ -95,7 +96,10 @@ export function AboutSettingsScreen({}: Props) {
             <Text style={[a.text_lg, {paddingBottom: 16}]}>
               because why not
             </Text>
-            <Text>
+            <Text style={[a.text_sm, {paddingBottom: 16}]}>
+              by @ocbwoy3.dev
+            </Text>
+            <Text style={[a.text_center, t.atoms.text_contrast_low]}>
               <Trans>
                 This is a third-party modification of Bluesky's Social App.
                 <br />

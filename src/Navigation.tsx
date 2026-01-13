@@ -134,6 +134,7 @@ import {Wizard} from '#/screens/StarterPack/Wizard'
 import TopicScreen from '#/screens/Topic'
 import {VideoFeed} from '#/screens/VideoFeed'
 import {type Theme, useTheme} from '#/alf'
+import {CrackSettingsScreen} from '#/components/CrackComponents/CrackSettingsScreen'
 import {
   EmailDialogScreenID,
   useEmailDialogControl,
@@ -213,6 +214,11 @@ function commonScreens(Stack: typeof Flat, unreadCountLabel?: string) {
         name="Settings"
         getComponent={() => SettingsScreen}
         options={{title: title(msg`Settings`), requireAuth: true}}
+      />
+      <Stack.Screen
+        name="CrackSettings"
+        getComponent={() => CrackSettingsScreen}
+        options={{title: title(msg`Crack settings`), requireAuth: true}}
       />
       <Stack.Screen
         name="LanguageSettings"

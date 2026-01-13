@@ -15,6 +15,7 @@ export type CommonNavigatorParams = {
   ModerationInteractionSettings: undefined
   ModerationVerificationSettings: undefined
   Settings: undefined
+  CrackSettings: undefined
   Profile: {name: string; hideBackButton?: boolean}
   ProfileFollowers: {name: string}
   ProfileFollows: {name: string}

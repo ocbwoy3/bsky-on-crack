@@ -259,6 +259,12 @@ export function SettingsScreen({}: Props) {
             </SettingsList.ItemText>
             <SettingsList.Chevron />
           </SettingsList.PressableItem>
+          <SettingsList.LinkItem to="/settings/crack" label={_(msg`Crack`)}>
+            <SettingsList.ItemIcon icon={CodeBracketsIcon} />
+            <SettingsList.ItemText>
+              <Trans>Crack</Trans>
+            </SettingsList.ItemText>
+          </SettingsList.LinkItem>
           <SettingsList.LinkItem to="/settings/about" label={_(msg`About`)}>
             <SettingsList.ItemIcon icon={BubbleInfoIcon} />
             <SettingsList.ItemText>

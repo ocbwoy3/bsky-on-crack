@@ -63,10 +63,28 @@ function Inner({control}: {control: Dialog.DialogControlProps}) {
             style={[a.text_2xl, a.font_semi_bold, a.pr_4xl, a.leading_tight]}>
             {label}
           </Text>
+          <Text
+            style={[
+              a.text_md,
+              a.leading_snug,
+              t.atoms.text_contrast_medium,
+              a.italic,
+            ]}>
+            {/**
+             * Plz tell @ocbwoy3.dev to stop putting deltarune references everywhere PLEASE
+             * that guy has a serious problem
+             */}
+            <Trans>
+              It's basically Bluesky on steroids. Ascend into the magical realm
+              that is the AT Protocol, and you'll finally have a chance at being
+              a [[BIG SHOT]]! Just like Spamton!
+            </Trans>
+          </Text>
           <Text style={[a.text_md, a.leading_snug]}>
             <Trans>
-              Here's how to access settings so you can finally be a [[BIG
-              SHOT]]! Have fun!
+              Jokes (and Deltarune references) aside, at its core, this is still
+              the same Bluesky, just with a couple of extra features. Think of
+              it as the Vencord of Bluesky.
             </Trans>
           </Text>
         </View>

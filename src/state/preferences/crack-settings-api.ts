@@ -1,3 +1,4 @@
+import {isWeb} from '#/platform/detection'
 import {type Schema} from '#/state/persisted/schema'
 
 export type CrackSettings = NonNullable<Schema['crackSettings']>
@@ -29,18 +30,36 @@ export type CrackSettingsItem =
   | CrackSettingsToggleItem
   | CrackSettingsButtonItem
 
+export type CrackSettingsItemWithPredicate = CrackSettingsItem & {
+  predicate?: () => boolean
+}
+
 export type CrackSettingsSection = {
   id: string
   title: string
   description: string
-  items: CrackSettingsItem[]
+  items: CrackSettingsItemWithPredicate[]
+}
+
+export const APPVIEW_DEFAULT_VERIFIERS: string[] = [
+  'did:plc:z72i7hdynmk6r22z27h6tvur', // <-- Bluesky
+  'did:plc:inz4fkbbp7ms3ixufw6xuvdi', // <-- WIRED
+  'did:plc:b2kutgxqlltwc6lhs724cfwr', // <-- The Athletic
+  'did:plc:eclio37ymobqex2ncko63h4r', // <-- The New York Times
+]
+
+export const NEG_APPVIEW_VERIFIERS_LABELER_SUB: {[did: string]: string[]} = {
+  // anti-transphobia labeler
+  'did:plc:4ugewi6aca52a62u62jccbl7': [
+    'did:plc:eclio37ymobqex2ncko63h4r', // <-- nyt
+  ],
 }
 
 export const crackSettingsSections: CrackSettingsSection[] = [
   {
-    id: 'visuals',
-    title: 'Visuals',
-    description: 'Branding, logos, and UI flourishes.',
+    id: 'bluesky',
+    title: 'Bluesky',
+    description: 'All the cool stuff.',
     items: [
       {
         type: 'toggle',
@@ -51,28 +70,22 @@ export const crackSettingsSections: CrackSettingsSection[] = [
     ],
   },
   {
-    id: 'verification',
-    title: 'Verification',
-    description: 'Experimental verification tweaks.',
-    items: [
-      {
-        type: 'toggle',
-        key: 'customVerificationsEnabled',
-        label: 'Custom verifications',
-        description: 'Use trusted verifiers you choose instead of defaults.',
-      },
-    ],
-  },
-  {
-    id: 'moderation',
-    title: 'Moderation',
-    description: 'Extra moderation controls.',
+    id: 'atproto',
+    title: 'AT Protocol',
+    description: 'Highly technical, I know.',
     items: [
       {
         type: 'toggle',
         key: 'uncapLabelerLimit',
         label: 'Uncap labeler limit',
-        description: 'Allow more than twenty labeler subscriptions.',
+        description: "Removes Bluesky's 20 labeler limit. Might break.",
+      },
+      {
+        type: 'toggle',
+        key: 'customVerificationsEnabled',
+        label: 'Blue checkmark',
+        description:
+          'Become your own verifier, select your own trusted verifiers.',
       },
     ],
   },
@@ -84,16 +97,17 @@ export const crackSettingsSections: CrackSettingsSection[] = [
       {
         type: 'button',
         id: 'openSettingsHelpModal',
-        label: 'Settings help modal',
-        description: 'Show the settings help instructions.',
+        label: 'Settings - Welcome',
+        description: "What you'd see by default.",
         buttonLabel: 'Open',
       },
       {
         type: 'button',
         id: 'openWelcomeModal',
-        label: 'Welcome modal',
-        description: 'Force open the welcome modal right now.',
+        label: 'Welcome',
+        description: 'Web only',
         buttonLabel: 'Open',
+        predicate: () => Boolean(isWeb),
       },
     ],
   },
