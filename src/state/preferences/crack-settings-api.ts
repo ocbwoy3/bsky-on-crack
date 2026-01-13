@@ -71,7 +71,8 @@ export const APPVIEW_DEFAULT_VERIFIERS: string[] = [
 export const LABELER_NEG_VERIFIERS: {[did: string]: string[]} = {
   // asukafield.xyz
   'did:plc:4ugewi6aca52a62u62jccbl7': [
-    'did:plc:eclio37ymobqex2ncko63h4r', // <-- nyt
+    'did:plc:eclio37ymobqex2ncko63h4r', // nyt
+    'did:plc:k5nskatzhyxersjilvtnz4lh', // washington post
   ],
 }
 
