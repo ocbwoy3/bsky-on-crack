@@ -99,7 +99,7 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         type: 'toggle',
         key: 'uncapLabelerLimit',
         label: 'Uncap labeler limit',
-        description: "Removes Bluesky's 20 labeler limit. Might break.",
+        description: "Remove Bluesky's 20 labeler limit. Might break the app.",
       },
       {
         type: 'toggle',
