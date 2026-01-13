@@ -2,9 +2,13 @@ import {Fragment} from 'react'
 import {type ComponentType} from 'react'
 import {View} from 'react-native'
 import {Trans} from '@lingui/macro'
+import {useNavigation} from '@react-navigation/native'
 import {type NativeStackScreenProps} from '@react-navigation/native-stack'
 
-import {type CommonNavigatorParams} from '#/lib/routes/types'
+import {
+  type CommonNavigatorParams,
+  type NavigationProp,
+} from '#/lib/routes/types'
 import {emitOpenSettingsHelpModal, emitOpenWelcomeModal} from '#/state/events'
 import {
   type CrackSettings,
@@ -30,9 +34,9 @@ import {Text} from '#/components/Typography'
 type Props = NativeStackScreenProps<CommonNavigatorParams, 'CrackSettings'>
 
 const sectionIcons: Record<string, ComponentType<SVGIconProps>> = {
-  visuals: SparkleIcon,
+  bluesky: SparkleIcon,
   verification: CircleCheckIcon,
-  moderation: FilterIcon,
+  atproto: FilterIcon,
   nux: WindowIcon,
 }
 
@@ -41,6 +45,7 @@ export function CrackSettingsScreen({}: Props) {
   const {gtMobile} = useBreakpoints()
   const settings = useCrackSettings()
   const {update} = useCrackSettingsApi()
+  const navigation = useNavigation<NavigationProp>()
 
   const onToggleSetting = (key: keyof CrackSettings, value: boolean) => {
     update({[key]: value} as Partial<CrackSettings>)
@@ -53,6 +58,9 @@ export function CrackSettingsScreen({}: Props) {
         break
       case 'openSettingsHelpModal':
         emitOpenSettingsHelpModal()
+        break
+      case 'openVerificationSettings':
+        navigation.navigate('CrackVerificationSettings')
         break
     }
   }
@@ -129,8 +137,10 @@ function getItemIcon(item: CrackSettingsSection['items'][number]) {
   if (item.type === 'toggle') {
     if (item.key === 'kawaiiMode') return SparkleIcon
     if (item.key === 'customVerificationsEnabled') return CircleCheckIcon
+    if (item.key) return CircleCheckIcon
     return FilterIcon
   }
+  if (item.id === 'openVerificationSettings') return CircleCheckIcon
   return WindowIcon
 }
 

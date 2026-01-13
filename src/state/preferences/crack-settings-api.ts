@@ -98,15 +98,15 @@ export const crackSettingsSections: CrackSettingsSection[] = [
       {
         type: 'toggle',
         key: 'uncapLabelerLimit',
-        label: 'Uncap labeler limit',
+        label: 'Remote labeler limit',
         description: "Remove Bluesky's 20 labeler limit. Might break the app.",
       },
       {
-        type: 'toggle',
-        key: 'customVerificationsEnabled',
-        label: 'Blue checkmark',
-        description:
-          'Become your own verifier, select your own trusted verifiers.',
+        type: 'button',
+        id: 'openVerificationSettings',
+        label: 'Verification settings',
+        description: 'Manage trusted verifiers and negations.',
+        buttonLabel: 'Manage',
       },
     ],
   },

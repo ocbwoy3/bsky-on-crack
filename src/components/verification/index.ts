@@ -4,6 +4,7 @@ import {usePreferencesQuery} from '#/state/queries/preferences'
 import {useCurrentAccountProfile} from '#/state/queries/useCurrentAccountProfile'
 import {useSession} from '#/state/session'
 import {useVerificationState} from '#/state/verification/custom-verification'
+import {useCustomVerificationTrustedList} from '#/state/verification/custom-verifiers'
 import type * as bsky from '#/types/bsky'
 
 export type FullVerificationState = {
@@ -86,6 +87,8 @@ export function useSimpleVerificationState({
   profile?: bsky.profile.AnyProfileView
 }): SimpleVerificationState {
   const preferences = usePreferencesQuery()
+  const {currentAccount} = useSession()
+  const {trusted} = useCustomVerificationTrustedList()
   const {state: verificationState} = useVerificationState(profile)
   const prefs = useMemo(
     () => preferences.data?.verificationPrefs || {hideBadges: false},
@@ -100,17 +103,19 @@ export function useSimpleVerificationState({
       }
     }
 
-    const {verifiedStatus, trustedVerifierStatus} = verificationState
+    const {verifiedStatus} = verificationState
     const isVerifiedUser = ['valid', 'invalid'].includes(verifiedStatus)
-    const isVerifierUser = ['valid', 'invalid'].includes(trustedVerifierStatus)
+    const isViewer = profile.did === currentAccount?.did
+    const isVerifierUser = Boolean(
+      isViewer && currentAccount?.did && trusted.includes(currentAccount.did),
+    )
     const isVerified =
-      (isVerifiedUser && verifiedStatus === 'valid') ||
-      (isVerifierUser && trustedVerifierStatus === 'valid')
+      (isVerifiedUser && verifiedStatus === 'valid') || isVerifierUser
 
     return {
       role: isVerifierUser ? 'verifier' : 'default',
       isVerified,
       showBadge: prefs.hideBadges ? false : isVerified,
     }
-  }, [profile, prefs, verificationState])
+  }, [profile, prefs, verificationState, currentAccount, trusted])
 }
