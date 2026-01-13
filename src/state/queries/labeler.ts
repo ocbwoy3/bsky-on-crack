@@ -1,9 +1,11 @@
-import {type AppBskyLabelerDefs} from '@atproto/api'
+import {type AppBskyActorDefs, type AppBskyLabelerDefs} from '@atproto/api'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import chunk from 'lodash.chunk'
 import {z} from 'zod'
 
 import {MAX_LABELERS} from '#/lib/constants'
 import {labelersDetailedInfoQueryKeyRoot} from '#/lib/react-query'
+import * as persisted from '#/state/persisted'
 import {useCrackSettings} from '#/state/preferences'
 import {STALE} from '#/state/queries'
 import {
@@ -87,6 +89,10 @@ export function useLabelerSubscriptionMutation() {
 
   return useMutation({
     async mutationFn({did, subscribe}: {did: string; subscribe: boolean}) {
+      const allowUncapped =
+        uncapLabelerLimit ||
+        persisted.get('crackSettings')?.uncapLabelerLimit === true
+
       // TODO
       z.object({
         did: z.string(),
@@ -107,19 +113,26 @@ export function useLabelerSubscriptionMutation() {
       ).map(l => l.did)
       const invalidLabelers: string[] = []
       if (labelerDids.length) {
-        const profiles = await agent.getProfiles({actors: labelerDids})
-        if (profiles.data) {
-          for (const did of labelerDids) {
-            const exists = profiles.data.profiles.find(p => p.did === did)
-            if (exists) {
-              // profile came back but it's not a valid labeler
-              if (exists.associated && !exists.associated.labeler) {
-                invalidLabelers.push(did)
-              }
-            } else {
-              // no response came back, might be deactivated or takendown
+        const profilesByDid = new Map<
+          string,
+          AppBskyActorDefs.ProfileViewDetailed
+        >()
+        for (const didChunk of chunk(labelerDids, 25)) {
+          const profiles = await agent.getProfiles({actors: didChunk})
+          for (const profile of profiles.data?.profiles ?? []) {
+            profilesByDid.set(profile.did, profile)
+          }
+        }
+        for (const did of labelerDids) {
+          const exists = profilesByDid.get(did)
+          if (exists) {
+            // profile came back but it's not a valid labeler
+            if (exists.associated && !exists.associated.labeler) {
               invalidLabelers.push(did)
             }
+          } else {
+            // no response came back, might be deactivated or takendown
+            invalidLabelers.push(did)
           }
         }
       }
@@ -129,7 +142,7 @@ export function useLabelerSubscriptionMutation() {
 
       if (subscribe) {
         const labelerCount = labelerDids.length - invalidLabelers.length
-        if (!uncapLabelerLimit && labelerCount >= MAX_LABELERS) {
+        if (!allowUncapped && labelerCount >= MAX_LABELERS) {
           throw new Error('MAX_LABELERS')
         }
         await agent.addLabeler(did)
