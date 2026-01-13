@@ -84,7 +84,7 @@ function Inner({control}: {control: Dialog.DialogControlProps}) {
             <Trans>
               Jokes (and Deltarune references) aside, at its core, this is still
               the same Bluesky, just with a couple of extra features. Think of
-              it as the Vencord of Bluesky.
+              it as like Vencord or similar.
             </Trans>
           </Text>
         </View>
