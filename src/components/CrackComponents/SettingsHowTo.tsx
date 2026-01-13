@@ -28,40 +28,40 @@ function Inner({control}: {control: Dialog.DialogControlProps}) {
   const t = useTheme()
   const {_} = useLingui()
   const {gtMobile} = useBreakpoints()
+  const label = _(msg`Welcome!`)
 
   return (
     <Dialog.ScrollableInner
-      label="Welcome!"
+      label={label}
       style={[
         gtMobile ? {width: 'auto', maxWidth: 400, minWidth: 200} : a.w_full,
       ]}>
-      <View
-        style={[
-          a.w_full,
-          a.rounded_md,
-          a.overflow_hidden,
-          t.atoms.bg_contrast_25,
-          {minHeight: 100},
-        ]}>
-        <Image
-          accessibilityIgnoresInvertColors
-          source={require('../../../assets/images/bigshot_settins_nux.gif')}
-          style={[
-            {
-              aspectRatio: 450 / 544,
-            },
-          ]}
-          alt={_(
-            msg`An illustration showing that Bluesky selects trusted verifiers, and trusted verifiers in turn verify individual user accounts.`,
-          )}
-        />
-      </View>
-
       <View style={[a.gap_lg]}>
+        <View
+          style={[
+            a.w_full,
+            a.rounded_md,
+            a.overflow_hidden,
+            t.atoms.bg_contrast_25,
+            {minHeight: 100},
+          ]}>
+          <Image
+            accessibilityIgnoresInvertColors
+            source={require('../../../assets/images/bigshot_settins_nux.gif')}
+            style={[
+              {
+                aspectRatio: 450 / 544, // <-- do not change this
+              },
+            ]}
+            alt={_(
+              msg`An illustration showing that Bluesky selects trusted verifiers, and trusted verifiers in turn verify individual user accounts.`,
+            )}
+          />
+        </View>
         <View style={[a.gap_sm]}>
           <Text
             style={[a.text_2xl, a.font_semi_bold, a.pr_4xl, a.leading_tight]}>
-            Welcome!
+            {label}
           </Text>
           <Text style={[a.text_md, a.leading_snug]}>
             <Trans>
@@ -70,9 +70,6 @@ function Inner({control}: {control: Dialog.DialogControlProps}) {
             </Trans>
           </Text>
         </View>
-
-        <View style={[a.gap_sm]} />
-
         <View
           style={[
             a.w_full,
