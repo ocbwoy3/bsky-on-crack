@@ -192,7 +192,7 @@ export function CrackVerificationSettingsScreen({}: Props) {
                 color="secondary"
                 onPress={onResetList}>
                 <ButtonText>
-                  <Trans>Reset list</Trans>
+                  <Trans>Reset to AppView defaults</Trans>
                 </ButtonText>
               </Button>
             </View>

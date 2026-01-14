@@ -28,7 +28,7 @@ function Inner({control}: {control: Dialog.DialogControlProps}) {
   const t = useTheme()
   const {_} = useLingui()
   const {gtMobile} = useBreakpoints()
-  const label = _(msg`Welcome!`)
+  const label = _(msg`Welcome! Please read!`)
 
   return (
     <Dialog.ScrollableInner
@@ -54,7 +54,7 @@ function Inner({control}: {control: Dialog.DialogControlProps}) {
               },
             ]}
             alt={_(
-              msg`An illustration showing that Bluesky selects trusted verifiers, and trusted verifiers in turn verify individual user accounts.`,
+              msg`An animated illustration showing how to open Crack Settings on Desktop.`,
             )}
           />
         </View>
@@ -75,9 +75,9 @@ function Inner({control}: {control: Dialog.DialogControlProps}) {
              * that guy has a serious problem
              */}
             <Trans>
-              It's basically Bluesky on steroids. Ascend into the magical realm
-              that is the AT Protocol, and you'll finally have a chance at being
-              a [[BIG SHOT]]! Just like Spamton!
+              This app is basically just Bluesky, but on steroids. Ascend into
+              the magical realm that is the AT Protocol, and you'll finally have
+              a chance at being a [[BIG SHOT]]! Just like Spamton!
             </Trans>
           </Text>
           <Text style={[a.text_md, a.leading_snug]}>
