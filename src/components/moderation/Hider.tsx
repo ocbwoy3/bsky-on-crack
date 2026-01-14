@@ -85,7 +85,7 @@ export function Outer({
   }
 
   return (
-    <Context.Provider value={ctx}>
+    <Context.Provider value={ctx as Context}>
       {children}
       <ModerationDetailsDialog control={control} modcause={blur} />
     </Context.Provider>
