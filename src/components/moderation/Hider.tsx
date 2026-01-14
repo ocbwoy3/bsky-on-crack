@@ -39,6 +39,9 @@ export function Outer({
 }>) {
   const control = useModerationDetailsDialogControl()
   const blur = modui?.blurs[0]
+  const [isContentVisible, setIsContentVisible] = React.useState(
+    isContentVisibleInitialState || !blur,
+  )
   const info = useModerationCauseDescription(blur)
   const {hijackHideLabels} = useCrackSettings()
   const isHijackHide =
@@ -46,9 +49,6 @@ export function Outer({
     blur?.type === 'label' &&
     blur.label.val === '!hide' &&
     blur.label.neg !== true
-  const [isContentVisible, setIsContentVisible] = React.useState(
-    isContentVisibleInitialState || !blur || isHijackHide,
-  )
 
   const meta = {
     isNoPwi: Boolean(
@@ -69,12 +69,6 @@ export function Outer({
     if (!meta.allowOverride) return
     setIsContentVisible(show)
   }
-
-  React.useEffect(() => {
-    if (isHijackHide) {
-      setIsContentVisible(true)
-    }
-  }, [isHijackHide])
 
   const ctx = {
     isContentVisible,
