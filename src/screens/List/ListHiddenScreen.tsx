@@ -8,6 +8,7 @@ import {useQueryClient} from '@tanstack/react-query'
 import {useGoBack} from '#/lib/hooks/useGoBack'
 import {sanitizeHandle} from '#/lib/strings/handles'
 import {logger} from '#/logger'
+import {useCrackSettings} from '#/state/preferences'
 import {RQKEY_ROOT as listQueryRoot} from '#/state/queries/list'
 import {useListBlockMutation, useListMuteMutation} from '#/state/queries/list'
 import {
@@ -35,6 +36,7 @@ export function ListHiddenScreen({
   const t = useTheme()
   const {currentAccount} = useSession()
   const {gtMobile} = useBreakpoints()
+  const {hijackHideLabels} = useCrackSettings()
   const isOwner = currentAccount?.did === list.creator.did
   const goBack = useGoBack()
   const queryClient = useQueryClient()
@@ -178,7 +180,7 @@ export function ListHiddenScreen({
               ) : null}
             </Button>
           ) : null}
-          {isOwner ? (
+          {hijackHideLabels || isOwner ? (
             <Button
               variant="solid"
               color="secondary"

@@ -24,12 +24,14 @@ import {Divider} from '#/components/Divider'
 import * as Toggle from '#/components/forms/Toggle'
 import {ChevronRight_Stroke2_Corner0_Rounded as ChevronRight} from '#/components/icons/Chevron'
 import {CircleCheck_Stroke2_Corner0_Rounded as CircleCheckIcon} from '#/components/icons/CircleCheck'
+import {CircleX_Stroke2_Corner0_Rounded as CircleXIcon} from '#/components/icons/CircleX'
 import {type Props as SVGIconProps} from '#/components/icons/common'
 import {Filter_Stroke2_Corner0_Rounded as FilterIcon} from '#/components/icons/Filter'
 import {Sparkle_Stroke2_Corner0_Rounded as SparkleIcon} from '#/components/icons/Sparkle'
 import {Window_Stroke2_Corner2_Rounded as WindowIcon} from '#/components/icons/Window'
 import * as Layout from '#/components/Layout'
 import {Text} from '#/components/Typography'
+import {ShieldCheck_Stroke2_Corner0_Rounded as ShieldIcon} from '../icons/Shield'
 
 type Props = NativeStackScreenProps<CommonNavigatorParams, 'CrackSettings'>
 
@@ -137,7 +139,9 @@ function getItemIcon(item: CrackSettingsSection['items'][number]) {
   if (item.type === 'toggle') {
     if (item.key === 'kawaiiMode') return SparkleIcon
     if (item.key === 'customVerificationsEnabled') return CircleCheckIcon
-    if (item.key) return CircleCheckIcon
+    if (item.key === 'hijackHideLabels') return CircleXIcon
+    if (item.key === 'uncapLabelerLimit') return ShieldIcon
+
     return FilterIcon
   }
   if (item.id === 'openVerificationSettings') return CircleCheckIcon

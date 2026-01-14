@@ -9,6 +9,7 @@ export const crackSettingsDefaults: CrackSettings = {
   showWelcomeModal: true,
   customVerificationsEnabled: false,
   uncapLabelerLimit: false,
+  hijackHideLabels: false,
 }
 
 export type CrackSettingsToggleItem = {
@@ -101,6 +102,12 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         key: 'uncapLabelerLimit',
         label: 'Remote labeler limit',
         description: "Remove Bluesky's 20 labeler limit. Might break the app.",
+      },
+      {
+        type: 'toggle',
+        key: 'hijackHideLabels',
+        label: 'Bypass hide',
+        description: 'Lets you view users and lists labeled !hide.',
       },
       {
         type: 'button',

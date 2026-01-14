@@ -9,7 +9,7 @@ import {useGlobalLabelStrings} from '#/lib/moderation/useGlobalLabelStrings'
 import {getDefinition, getLabelStrings} from '#/lib/moderation/useLabelInfo'
 import {useModerationCauseDescription} from '#/lib/moderation/useModerationCauseDescription'
 import {sanitizeDisplayName} from '#/lib/strings/display-names'
-import {useLabelDefinitions} from '#/state/preferences'
+import {useCrackSettings, useLabelDefinitions} from '#/state/preferences'
 import {atoms as a, useBreakpoints, useTheme, web} from '#/alf'
 import {Button} from '#/components/Button'
 import {
@@ -72,10 +72,17 @@ function ContentHiderActive({
   const [override, setOverride] = React.useState(false)
   const control = useModerationDetailsDialogControl()
   const {labelDefs} = useLabelDefinitions()
+  const {hijackHideLabels} = useCrackSettings()
   const globalLabelStrings = useGlobalLabelStrings()
   const {i18n} = useLingui()
   const blur = modui?.blurs[0]
   const desc = useModerationCauseDescription(blur)
+  const isHijackHide =
+    hijackHideLabels &&
+    blur?.type === 'label' &&
+    blur.label.val === '!hide' &&
+    blur.label.neg !== true
+  const canOverride = !modui.noOverride || isHijackHide
 
   const labelName = React.useMemo(() => {
     if (!modui?.blurs || !blur) {
@@ -145,7 +152,7 @@ function ContentHiderActive({
         onPress={e => {
           e.preventDefault()
           e.stopPropagation()
-          if (!modui.noOverride) {
+          if (canOverride) {
             setOverride(v => !v)
           } else {
             control.open()
@@ -153,7 +160,7 @@ function ContentHiderActive({
         }}
         label={desc.name}
         accessibilityHint={
-          modui.noOverride
+          !canOverride
             ? _(msg`Learn more about the moderation applied to this content`)
             : override
               ? _(msg`Hides the content`)
@@ -194,7 +201,7 @@ function ContentHiderActive({
               numberOfLines={2}>
               {labelName}
             </Text>
-            {!modui.noOverride && (
+            {canOverride && (
               <Text
                 style={[
                   a.font_semi_bold,

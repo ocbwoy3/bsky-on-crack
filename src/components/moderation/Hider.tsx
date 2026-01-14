@@ -5,6 +5,7 @@ import {
   type ModerationCauseDescription,
   useModerationCauseDescription,
 } from '#/lib/moderation/useModerationCauseDescription'
+import {useCrackSettings} from '#/state/preferences'
 import {
   ModerationDetailsDialog,
   useModerationDetailsDialogControl,
@@ -42,6 +43,12 @@ export function Outer({
     isContentVisibleInitialState || !blur,
   )
   const info = useModerationCauseDescription(blur)
+  const {hijackHideLabels} = useCrackSettings()
+  const isHijackHide =
+    hijackHideLabels &&
+    blur?.type === 'label' &&
+    blur.label.val === '!hide' &&
+    blur.label.neg !== true
 
   const meta = {
     isNoPwi: Boolean(
@@ -51,7 +58,7 @@ export function Outer({
           cause.labelDef.identifier === '!no-unauthenticated',
       ),
     ),
-    allowOverride: allowOverride ?? !modui?.noOverride,
+    allowOverride: (allowOverride ?? !modui?.noOverride) || isHijackHide,
   }
 
   const showInfoDialog = () => {

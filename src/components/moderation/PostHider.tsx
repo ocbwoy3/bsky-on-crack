@@ -17,6 +17,7 @@ import {useQueryClient} from '@tanstack/react-query'
 
 import {useModerationCauseDescription} from '#/lib/moderation/useModerationCauseDescription'
 import {addStyle} from '#/lib/styles'
+import {useCrackSettings} from '#/state/preferences'
 import {precacheProfile} from '#/state/queries/profile'
 // import {Link} from '#/components/Link' TODO this imposes some styles that screw things up
 import {Link} from '#/view/com/util/Link'
@@ -60,12 +61,19 @@ export function PostHider({
     modui.blurs[0] ||
     (interpretFilterAsBlur ? getBlurrableFilter(modui) : undefined)
   const desc = useModerationCauseDescription(blur)
+  const {hijackHideLabels} = useCrackSettings()
+  const isHijackHide =
+    hijackHideLabels &&
+    blur?.type === 'label' &&
+    blur.label.val === '!hide' &&
+    blur.label.neg !== true
+  const canOverride = !modui.noOverride || isHijackHide
 
   const onBeforePress = React.useCallback(() => {
     precacheProfile(queryClient, profile)
   }, [queryClient, profile])
 
-  if (!blur || (disabled && !modui.noOverride)) {
+  if (!blur || (disabled && !canOverride)) {
     return (
       <Link
         testID={testID}
@@ -82,7 +90,7 @@ export function PostHider({
   return !override ? (
     <Pressable
       onPress={() => {
-        if (!modui.noOverride) {
+        if (canOverride) {
           setOverride(v => !v)
         }
       }}
@@ -132,7 +140,7 @@ export function PostHider({
         numberOfLines={1}>
         {desc.name}
       </Text>
-      {!modui.noOverride && (
+      {canOverride && (
         <Text style={[{color: t.palette.primary_500}]}>
           {override ? <Trans>Hide</Trans> : <Trans>Show</Trans>}
         </Text>

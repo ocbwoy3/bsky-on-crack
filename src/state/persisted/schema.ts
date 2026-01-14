@@ -127,6 +127,7 @@ const schema = z.object({
       showWelcomeModal: z.boolean().optional(),
       customVerificationsEnabled: z.boolean().optional(),
       uncapLabelerLimit: z.boolean().optional(),
+      hijackHideLabels: z.boolean().optional(),
     })
     .optional(),
   hasCheckedForStarterPack: z.boolean().optional(),
@@ -183,6 +184,7 @@ export const defaults: Schema = {
     showWelcomeModal: true,
     customVerificationsEnabled: false,
     uncapLabelerLimit: false,
+    hijackHideLabels: false,
   },
   hasCheckedForStarterPack: false,
   subtitlesEnabled: true,
