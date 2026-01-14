@@ -128,6 +128,7 @@ const schema = z.object({
       customVerificationsEnabled: z.boolean().optional(),
       uncapLabelerLimit: z.boolean().optional(),
       hijackHideLabels: z.boolean().optional(),
+      hideSuggestedAccounts: z.boolean().optional(),
     })
     .optional(),
   hasCheckedForStarterPack: z.boolean().optional(),
@@ -185,6 +186,7 @@ export const defaults: Schema = {
     customVerificationsEnabled: false,
     uncapLabelerLimit: false,
     hijackHideLabels: false,
+    hideSuggestedAccounts: false,
   },
   hasCheckedForStarterPack: false,
   subtitlesEnabled: true,

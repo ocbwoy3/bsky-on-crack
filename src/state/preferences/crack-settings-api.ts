@@ -10,6 +10,7 @@ export const crackSettingsDefaults: CrackSettings = {
   customVerificationsEnabled: false,
   uncapLabelerLimit: false,
   hijackHideLabels: false,
+  hideSuggestedAccounts: false,
 }
 
 export type CrackSettingsToggleItem = {
@@ -89,6 +90,12 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         key: 'kawaiiMode',
         label: 'Kawaii mode',
         description: 'Swap in the cute logo.',
+      },
+      {
+        type: 'toggle',
+        key: 'hideSuggestedAccounts',
+        label: 'Hide suggested accounts',
+        description: "AppView's Social Graph thing, or whatever.",
       },
     ],
   },

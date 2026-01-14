@@ -3,6 +3,7 @@ import {type AppBskyActorDefs} from '@atproto/api'
 
 import {AccordionAnimation} from '#/lib/custom-animations/AccordionAnimation'
 import {isAndroid} from '#/platform/detection'
+import {useCrackSettings} from '#/state/preferences'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {
   useSuggestedFollowsByActorQuery,
@@ -14,6 +15,14 @@ import {ProfileGrid} from '#/components/FeedInterstitials'
 const DISMISS_ANIMATION_DURATION = 200
 
 export function ProfileHeaderSuggestedFollows({actorDid}: {actorDid: string}) {
+  const {hideSuggestedAccounts} = useCrackSettings()
+  if (hideSuggestedAccounts) {
+    return null
+  }
+  return <ProfileHeaderSuggestedFollowsInner actorDid={actorDid} />
+}
+
+function ProfileHeaderSuggestedFollowsInner({actorDid}: {actorDid: string}) {
   const {gtMobile} = useBreakpoints()
   const moderationOpts = useModerationOpts()
   const maxLength = gtMobile ? 4 : 12
@@ -113,6 +122,25 @@ export function ProfileHeaderSuggestedFollows({actorDid}: {actorDid: string}) {
 }
 
 export function AnimatedProfileHeaderSuggestedFollows({
+  isExpanded,
+  actorDid,
+}: {
+  isExpanded: boolean
+  actorDid: string
+}) {
+  const {hideSuggestedAccounts} = useCrackSettings()
+  if (hideSuggestedAccounts) {
+    return null
+  }
+  return (
+    <AnimatedProfileHeaderSuggestedFollowsInner
+      isExpanded={isExpanded}
+      actorDid={actorDid}
+    />
+  )
+}
+
+function AnimatedProfileHeaderSuggestedFollowsInner({
   isExpanded,
   actorDid,
 }: {

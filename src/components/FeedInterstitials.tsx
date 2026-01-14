@@ -11,6 +11,7 @@ import {logEvent, useGate} from '#/lib/statsig/statsig'
 import {logger} from '#/logger'
 import {type MetricEvents} from '#/logger/metrics'
 import {isIOS} from '#/platform/detection'
+import {useCrackSettings} from '#/state/preferences'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useGetPopularFeedsQuery} from '#/state/queries/feed'
 import {type FeedDescriptor} from '#/state/queries/post-feed'
@@ -196,8 +197,14 @@ function useExperimentalSuggestedUsersQuery() {
 }
 
 export function SuggestedFollows({feed}: {feed: FeedDescriptor}) {
+  const {hideSuggestedAccounts} = useCrackSettings()
   const {currentAccount} = useSession()
   const [feedType, feedUriOrDid] = feed.split('|')
+
+  if (hideSuggestedAccounts) {
+    return null
+  }
+
   if (feedType === 'author') {
     if (currentAccount?.did === feedUriOrDid) {
       return null

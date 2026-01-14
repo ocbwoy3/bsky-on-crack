@@ -15,6 +15,7 @@ import {cleanError} from '#/lib/strings/errors'
 import {sanitizeHandle} from '#/lib/strings/handles'
 import {logger} from '#/logger'
 import {type MetricEvents} from '#/logger/metrics'
+import {useCrackSettings} from '#/state/preferences'
 import {useLanguagePrefs} from '#/state/preferences/languages'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {RQKEY_ROOT as useActorSearchQueryKeyRoot} from '#/state/queries/actor-search'
@@ -211,6 +212,7 @@ export function Explore({
   const {_} = useLingui()
   const t = useTheme()
   const {data: preferences, error: preferencesError} = usePreferencesQuery()
+  const {hideSuggestedAccounts} = useCrackSettings()
   const moderationOpts = useModerationOpts()
   const [selectedInterest, setSelectedInterest] = useState<string | null>(null)
 
@@ -347,6 +349,9 @@ export function Explore({
     [],
   )
   const suggestedFollowsModule = useMemo(() => {
+    if (hideSuggestedAccounts) {
+      return []
+    }
     const i: ExploreScreenItems[] = []
     i.push({
       type: 'tabbedHeader',
@@ -422,6 +427,7 @@ export function Explore({
     suggestedUsersError,
     selectedInterest,
     useFullExperience,
+    hideSuggestedAccounts,
   ])
   const suggestedFeedsModule = useMemo(() => {
     const i: ExploreScreenItems[] = []
