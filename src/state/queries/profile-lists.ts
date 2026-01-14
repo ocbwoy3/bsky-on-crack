@@ -5,6 +5,7 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query'
 
+import {useCrackSettings} from '#/state/preferences'
 import {useAgent} from '#/state/session'
 import {useModerationOpts} from '../preferences/moderation-opts'
 
@@ -16,6 +17,7 @@ export const RQKEY = (did: string) => [RQKEY_ROOT, did]
 
 export function useProfileListsQuery(did: string, opts?: {enabled?: boolean}) {
   const moderationOpts = useModerationOpts()
+  const {hijackHideLabels} = useCrackSettings()
   const enabled = opts?.enabled !== false && Boolean(moderationOpts)
   const agent = useAgent()
   return useInfiniteQuery<
@@ -46,7 +48,17 @@ export function useProfileListsQuery(did: string, opts?: {enabled?: boolean}) {
             ...page,
             lists: page.lists.filter(list => {
               const decision = moderateUserList(list, moderationOpts!)
-              return !decision.ui('contentList').filter
+              if (!decision.ui('contentList').filter) {
+                return true
+              }
+              if (!hijackHideLabels) {
+                return false
+              }
+              return (
+                list.labels?.some(
+                  label => label.val === '!hide' && label.neg !== true,
+                ) ?? false
+              )
             }),
           }
         }),
