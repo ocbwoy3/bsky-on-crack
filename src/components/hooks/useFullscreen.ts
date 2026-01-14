@@ -1,10 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react'
+// @ocbwoy3 - codex: fix react nested loop error
+import {useCallback, useEffect, useRef, useSyncExternalStore} from 'react'
 
 import {isFirefox, isSafari} from '#/lib/browser'
 import {isWeb} from '#/platform/detection'
@@ -20,7 +15,7 @@ export function useFullscreen(ref?: React.RefObject<HTMLElement | null>) {
     Boolean(document.fullscreenElement),
   )
   const scrollYRef = useRef<null | number>(null)
-  const [prevIsFullscreen, setPrevIsFullscreen] = useState(isFullscreen)
+  const prevIsFullscreenRef = useRef(isFullscreen)
 
   const toggleFullscreen = useCallback(() => {
     if (isFullscreen) {
@@ -34,8 +29,9 @@ export function useFullscreen(ref?: React.RefObject<HTMLElement | null>) {
   }, [isFullscreen, ref])
 
   useEffect(() => {
+    const prevIsFullscreen = prevIsFullscreenRef.current
     if (prevIsFullscreen === isFullscreen) return
-    setPrevIsFullscreen(isFullscreen)
+    prevIsFullscreenRef.current = isFullscreen
 
     // Chrome has an issue where it doesn't scroll back to the top after exiting fullscreen
     // Let's play it safe and do it if not FF or Safari, since anything else will probably be chromium
@@ -47,7 +43,7 @@ export function useFullscreen(ref?: React.RefObject<HTMLElement | null>) {
         }
       }, 100)
     }
-  }, [isFullscreen, prevIsFullscreen])
+  }, [isFullscreen])
 
   return [isFullscreen, toggleFullscreen] as const
 }
