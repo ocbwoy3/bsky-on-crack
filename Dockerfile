@@ -43,11 +43,6 @@ ARG EXPO_PUBLIC_SENTRY_DSN
 ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
 
 #
-# Copy everything into the container
-#
-COPY . .
-
-#
 # Generate the JavaScript webpack.
 #
 RUN mkdir --parents $NVM_DIR && \
@@ -56,8 +51,36 @@ RUN mkdir --parents $NVM_DIR && \
     https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh && \
   bash /tmp/nvm-install.sh
 
+#
+# Install JS dependencies (cached by lockfile changes).
+#
+COPY package.json yarn.lock ./
+COPY patches ./patches
+COPY scripts ./scripts
+COPY lingui.config.js ./
+COPY src/locale ./src/locale
+COPY bskyweb/go.mod bskyweb/go.sum ./bskyweb/
+
 RUN \. "$NVM_DIR/nvm.sh" && \
   nvm install $NODE_VERSION && \
+  nvm use $NODE_VERSION && \
+  npm install --global yarn && \
+  yarn --frozen-lockfile
+
+#
+#
+# Generate the bskyweb Go binary.
+#
+RUN cd bskyweb/ && \
+  go mod download && \
+  go mod verify
+
+#
+# Copy everything into the container
+#
+COPY . .
+
+RUN \. "$NVM_DIR/nvm.sh" && \
   nvm use $NODE_VERSION && \
   echo "Using bundle identifier: $EXPO_PUBLIC_BUNDLE_IDENTIFIER" && \
   echo "EXPO_PUBLIC_ENV=$EXPO_PUBLIC_ENV" >> .env && \
@@ -65,21 +88,9 @@ RUN \. "$NVM_DIR/nvm.sh" && \
   echo "EXPO_PUBLIC_BUNDLE_IDENTIFIER=$EXPO_PUBLIC_BUNDLE_IDENTIFIER" >> .env && \
   echo "EXPO_PUBLIC_BUNDLE_DATE=$(date -u +"%y%m%d%H")" >> .env && \
   echo "EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN" >> .env && \
-  npm install --global yarn && \
-  yarn && \
   yarn intl:build 2>&1 | tee i18n.log && \
   if grep -q "invalid syntax" "i18n.log"; then echo "\n\nFound compilation errors!\n\n" && exit 1; else echo "\n\nNo compile errors!\n\n"; fi && \
   SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN SENTRY_RELEASE=$EXPO_PUBLIC_RELEASE_VERSION SENTRY_DIST=$EXPO_PUBLIC_BUNDLE_IDENTIFIER yarn build-web
-
-# DEBUG
-RUN find ./bskyweb/static && find ./web-build/static
-
-#
-# Generate the bskyweb Go binary.
-#
-RUN cd bskyweb/ && \
-  go mod download && \
-  go mod verify
 
 RUN cd bskyweb/ && \
   go build \

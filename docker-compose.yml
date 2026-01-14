@@ -9,7 +9,7 @@ services:
         EXPO_PUBLIC_ENV: production
         EXPO_PUBLIC_RELEASE_VERSION: local
         EXPO_PUBLIC_BUNDLE_IDENTIFIER: local
-    command: ["/bin/bskyweb serve --robots-disallow-all"]
+    command: ["/usr/bin/bskyweb", "serve", "--robots-disallow-all"]
     ports:
       - "8100:8100"
     environment:

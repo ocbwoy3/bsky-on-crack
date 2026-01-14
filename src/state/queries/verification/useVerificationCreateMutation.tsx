@@ -6,7 +6,14 @@ import {logger} from '#/logger'
 import {updateProfileShadow} from '#/state/cache/profile-shadow'
 import {useUpdateProfileVerificationCache} from '#/state/queries/verification/useUpdateProfileVerificationCache'
 import {useAgent, useSession} from '#/state/session'
-import {clearCustomVerificationCacheForProfile} from '#/state/verification/custom-verification'
+import {
+  applyOptimisticCustomVerificationState,
+  clearCustomVerificationCacheForProfile,
+} from '#/state/verification/custom-verification'
+import {
+  useCustomVerificationEnabled,
+  useCustomVerificationTrusted,
+} from '#/state/verification/custom-verifiers'
 import type * as bsky from '#/types/bsky'
 
 // ocbwoy3
@@ -53,6 +60,10 @@ export function useVerificationCreateMutation() {
   const agent = useAgent()
   const qc = useQueryClient() // <-- ocbwoy3
   const {currentAccount} = useSession()
+  const customVerificationEnabled = useCustomVerificationEnabled()
+  const trusted = useCustomVerificationTrusted(
+    customVerificationEnabled ? currentAccount?.did : undefined,
+  )
   const updateProfileVerificationCache = useUpdateProfileVerificationCache()
 
   return useMutation({
@@ -89,7 +100,20 @@ export function useVerificationCreateMutation() {
           verification: optimisticVerification,
         })
       }
-      clearCustomVerificationCacheForProfile(profile.did)
+      if (customVerificationEnabled && currentAccount) {
+        applyOptimisticCustomVerificationState({
+          profile,
+          trusted,
+          verification: {
+            issuer: currentAccount.did,
+            isValid: true,
+            createdAt,
+            uri,
+          },
+        })
+      } else {
+        clearCustomVerificationCacheForProfile(profile.did)
+      }
       // eslint-disable-next-line no-void
       void (async () => {
         // <-- ocbwoy3

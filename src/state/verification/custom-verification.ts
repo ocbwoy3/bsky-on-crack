@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useState} from 'react'
 import {type AppBskyActorDefs} from '@atproto/api'
 import {TID} from '@atproto/common-web'
+import EventEmitter from 'eventemitter3'
 
 import {logger} from '#/logger'
 import {useSession} from '#/state/session'
@@ -33,11 +34,17 @@ const verificationStateInFlight = new Map<
   Promise<AppBskyActorDefs.VerificationState>
 >()
 const verificationCacheIndex = new Map<string, Set<string>>()
+const verificationCacheEmitter = new EventEmitter()
+
+function emitVerificationCacheUpdate(did?: string) {
+  verificationCacheEmitter.emit('update', did ?? '*')
+}
 
 export function clearCustomVerificationCache() {
   verificationStateCache.clear()
   verificationStateInFlight.clear()
   verificationCacheIndex.clear()
+  emitVerificationCacheUpdate()
 }
 
 export function clearCustomVerificationCacheForProfile(did: string) {
@@ -48,6 +55,7 @@ export function clearCustomVerificationCacheForProfile(did: string) {
     verificationStateInFlight.delete(key)
   }
   verificationCacheIndex.delete(did)
+  emitVerificationCacheUpdate(did)
 }
 
 function buildRecordUri(link: ConstellationLink) {
@@ -172,6 +180,30 @@ function createVerificationState(
   }
 }
 
+export function applyOptimisticCustomVerificationState({
+  profile,
+  trusted,
+  verification,
+}: {
+  profile: bsky.profile.AnyProfileView
+  trusted: Set<string>
+  verification: AppBskyActorDefs.VerificationView
+}): AppBskyActorDefs.VerificationState | undefined {
+  if (!trusted.has(verification.issuer)) return
+  const customKey = createStateCacheKey(profile, trusted)
+  if (!customKey) return
+  const existing = verificationStateCache.get(customKey)?.verifications ?? []
+  const next = existing.some(v => v.uri === verification.uri)
+    ? existing
+    : [...existing, verification]
+  next.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const nextState = createVerificationState(next, profile, trusted)
+  verificationStateCache.set(customKey, nextState)
+  indexCacheKey(profile.did, customKey)
+  emitVerificationCacheUpdate(profile.did)
+  return nextState
+}
+
 export async function fetchCustomVerificationState({
   profile,
   trusted,
@@ -223,11 +255,26 @@ export function useVerificationState(profile?: bsky.profile.AnyProfileView) {
   )
   const [state, setState] = useState<AppBskyActorDefs.VerificationState>()
   const [isLoading, setIsLoading] = useState(false)
+  const [cacheBuster, setCacheBuster] = useState(0)
 
   const customKey = useMemo(() => {
     if (!customEnabled || !profile) return undefined
     return createStateCacheKey(profile, trusted)
   }, [customEnabled, profile, trusted])
+
+  useEffect(() => {
+    if (!profile) return
+    function onCacheUpdate(did: string) {
+      //@ts-expect-error
+      if (did === profile.did || did === '*') {
+        setCacheBuster(value => value + 1)
+      }
+    }
+    verificationCacheEmitter.addListener('update', onCacheUpdate)
+    return () => {
+      verificationCacheEmitter.removeListener('update', onCacheUpdate)
+    }
+  }, [profile])
 
   useEffect(() => {
     if (!customEnabled || !profile) {
@@ -264,6 +311,7 @@ export function useVerificationState(profile?: bsky.profile.AnyProfileView) {
       verificationStateInFlight.set(customKey, inFlight)
     }
 
+    //@ts-expect-error
     inFlight
       .then(nextState => {
         if (cancelled) return
@@ -297,7 +345,7 @@ export function useVerificationState(profile?: bsky.profile.AnyProfileView) {
     return () => {
       cancelled = true
     }
-  }, [customEnabled, customKey, profile, trusted])
+  }, [customEnabled, customKey, profile, trusted, cacheBuster])
 
   if (!customEnabled) {
     return {state: profile?.verification, isCustom: false, isLoading: false}
