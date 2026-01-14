@@ -62,9 +62,12 @@ export function ScreenHider({
   )
   const isHijackHide =
     hijackHideLabels &&
-    blur.type === 'label' &&
-    blur.label.val === '!hide' &&
-    blur.label.neg !== true
+    modui.blurs.some(
+      cause =>
+        cause.type === 'label' &&
+        cause.label.val === '!hide' &&
+        cause.label.neg !== true,
+    )
   return (
     <CenteredView
       style={[

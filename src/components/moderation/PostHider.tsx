@@ -64,9 +64,12 @@ export function PostHider({
   const {hijackHideLabels} = useCrackSettings()
   const isHijackHide =
     hijackHideLabels &&
-    blur?.type === 'label' &&
-    blur.label.val === '!hide' &&
-    blur.label.neg !== true
+    modui.blurs.some(
+      cause =>
+        cause.type === 'label' &&
+        cause.label.val === '!hide' &&
+        cause.label.neg !== true,
+    )
   const canOverride = !modui.noOverride || isHijackHide
 
   const onBeforePress = React.useCallback(() => {

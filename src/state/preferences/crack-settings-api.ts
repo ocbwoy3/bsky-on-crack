@@ -97,6 +97,13 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         label: 'Hide suggested accounts',
         description: "AppView's Social Graph thing, or whatever.",
       },
+
+      {
+        type: 'toggle',
+        key: 'hijackHideLabels',
+        label: 'Bypass !hide',
+        description: 'Lets you view hidden users and lists.',
+      },
     ],
   },
   {
@@ -109,12 +116,6 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         key: 'uncapLabelerLimit',
         label: 'Remote labeler limit',
         description: "Remove Bluesky's 20 labeler limit. Might break the app.",
-      },
-      {
-        type: 'toggle',
-        key: 'hijackHideLabels',
-        label: 'Bypass hide',
-        description: 'Lets you view users and lists labeled !hide.',
       },
       {
         type: 'button',

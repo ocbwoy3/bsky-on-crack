@@ -20,6 +20,7 @@ import {
   type NativeStackScreenProps,
 } from '#/lib/routes/types'
 import {cleanError} from '#/lib/strings/errors'
+import {useCrackSettings} from '#/state/preferences'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useListQuery} from '#/state/queries/list'
 import {RQKEY as FEED_RQKEY} from '#/state/queries/post-feed'
@@ -154,6 +155,7 @@ function ProfileListScreenLoaded({
   const {openComposer} = useOpenComposer()
   const setMinimalShellMode = useSetMinimalShellMode()
   const {currentAccount} = useSession()
+  const {hijackHideLabels} = useCrackSettings()
   const {rkey} = route.params
   const feedSectionRef = useRef<SectionRef>(null)
   const aboutSectionRef = useRef<SectionRef>(null)
@@ -200,7 +202,9 @@ function ProfileListScreenLoaded({
 
   if (isCurateList) {
     return (
-      <Hider.Outer modui={moderation.ui('contentView')} allowOverride={isOwner}>
+      <Hider.Outer
+        modui={moderation.ui('contentView')}
+        allowOverride={isOwner || hijackHideLabels}>
         <Hider.Mask>
           <ListHiddenScreen list={list} preferences={preferences} />
         </Hider.Mask>
@@ -257,7 +261,9 @@ function ProfileListScreenLoaded({
     )
   }
   return (
-    <Hider.Outer modui={moderation.ui('contentView')} allowOverride={isOwner}>
+    <Hider.Outer
+      modui={moderation.ui('contentView')}
+      allowOverride={isOwner || hijackHideLabels}>
       <Hider.Mask>
         <ListHiddenScreen list={list} preferences={preferences} />
       </Hider.Mask>

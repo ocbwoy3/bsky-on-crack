@@ -46,9 +46,14 @@ export function Outer({
   const {hijackHideLabels} = useCrackSettings()
   const isHijackHide =
     hijackHideLabels &&
-    blur?.type === 'label' &&
-    blur.label.val === '!hide' &&
-    blur.label.neg !== true
+    Boolean(
+      modui?.blurs.some(
+        cause =>
+          cause.type === 'label' &&
+          cause.label.val === '!hide' &&
+          cause.label.neg !== true,
+      ),
+    )
 
   const meta = {
     isNoPwi: Boolean(
