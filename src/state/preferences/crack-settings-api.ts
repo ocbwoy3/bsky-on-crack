@@ -62,6 +62,7 @@ export const APPVIEW_DEFAULT_VERIFIERS: string[] = [
 
   // not listed in blu.ski:
   'did:plc:2w45zyhuklwihpdc7oj3mi63', // Forbes
+  'did:plc:oxo226vi7t2btjokm2buusoy', // European Commision
 ]
 
 /**
