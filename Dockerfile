@@ -47,8 +47,8 @@ ENV EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN
 #
 RUN mkdir --parents $NVM_DIR && \
   wget \
-    --output-document=/tmp/nvm-install.sh \
-    https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh && \
+  --output-document=/tmp/nvm-install.sh \
+  https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh && \
   bash /tmp/nvm-install.sh
 
 #
@@ -94,11 +94,11 @@ RUN \. "$NVM_DIR/nvm.sh" && \
 
 RUN cd bskyweb/ && \
   go build \
-    -v  \
-    -trimpath \
-    -tags timetzdata \
-    -o /bskyweb \
-    ./cmd/bskyweb
+  -v  \
+  -trimpath \
+  -tags timetzdata \
+  -o /bskyweb \
+  ./cmd/bskyweb
 
 FROM debian:bookworm-slim
 
@@ -115,10 +115,10 @@ ENTRYPOINT ["dumb-init", "--"]
 WORKDIR /bskyweb
 COPY --from=build-env /bskyweb /usr/bin/bskyweb
 
-CMD ["/usr/bin/bskyweb"]
+CMD ["/usr/bin/bskyweb", "serve", "--robots-disallow-all"]
 
 LABEL org.opencontainers.image.source=https://github.com/bluesky-social/social-app
-LABEL org.opencontainers.image.description="bsky.app Web App"
+LABEL org.opencontainers.image.description="bsky.app Web App - Bluesky On Crack (Third-party fork)"
 LABEL org.opencontainers.image.licenses=MIT
 
 # NOOP
