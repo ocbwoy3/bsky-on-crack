@@ -24,7 +24,7 @@ func run(args []string) {
 
 	app := cli.App{
 		Name:  "bskyweb",
-		Usage: "web server for bsky.app web app (SPA)",
+		Usage: "web server for bluesky on crack - third-party bsky.app web app (SPA)",
 	}
 
 	app.Commands = []*cli.Command{
