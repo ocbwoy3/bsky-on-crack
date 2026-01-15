@@ -20,6 +20,8 @@ import {
 } from '#/state/preferences'
 import {atoms as a, useBreakpoints, useTheme} from '#/alf'
 import {Button} from '#/components/Button'
+import {AlterEgoDialog} from '#/components/crack/AlterEgoDialog'
+import {useDialogControl} from '#/components/Dialog'
 import {Divider} from '#/components/Divider'
 import * as Toggle from '#/components/forms/Toggle'
 import {ChevronRight_Stroke2_Corner0_Rounded as ChevronRight} from '#/components/icons/Chevron'
@@ -48,6 +50,7 @@ export function CrackSettingsScreen({}: Props) {
   const settings = useCrackSettings()
   const {update} = useCrackSettingsApi()
   const navigation = useNavigation<NavigationProp>()
+  const alterEgoDialogControl = useDialogControl()
 
   const onToggleSetting = (key: keyof CrackSettings, value: boolean) => {
     update({[key]: value} as Partial<CrackSettings>)
@@ -63,6 +66,9 @@ export function CrackSettingsScreen({}: Props) {
         break
       case 'openVerificationSettings':
         navigation.navigate('CrackVerificationSettings')
+        break
+      case 'openAlterEgo':
+        alterEgoDialogControl.open()
         break
     }
   }
@@ -112,6 +118,7 @@ export function CrackSettingsScreen({}: Props) {
                           title={item.label}
                           description={item.description}
                           name={item.key}
+                          //@ts-expect-error
                           value={settings[item.key]!}
                           onChange={next => onToggleSetting(item.key, next)}
                         />
@@ -131,6 +138,7 @@ export function CrackSettingsScreen({}: Props) {
           })}
         </View>
       </Layout.Content>
+      <AlterEgoDialog control={alterEgoDialogControl} />
     </Layout.Screen>
   )
 }
@@ -145,6 +153,7 @@ function getItemIcon(item: CrackSettingsSection['items'][number]) {
     return FilterIcon
   }
   if (item.id === 'openVerificationSettings') return CircleCheckIcon
+  if (item.id === 'openAlterEgo') return SparkleIcon
   return WindowIcon
 }
 

@@ -11,6 +11,7 @@ export const crackSettingsDefaults: CrackSettings = {
   uncapLabelerLimit: false,
   hijackHideLabels: false,
   hideSuggestedAccounts: false,
+  alterEgoUri: undefined,
 }
 
 export type CrackSettingsToggleItem = {
@@ -103,6 +104,13 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         key: 'hijackHideLabels',
         label: 'Bypass !hide',
         description: 'Lets you view hidden users and lists.',
+      },
+      {
+        type: 'button',
+        id: 'openAlterEgo',
+        label: 'Alter ego',
+        description: 'Overlay your profile with a custom alter ego record.',
+        buttonLabel: 'Configure',
       },
     ],
   },
