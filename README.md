@@ -7,7 +7,7 @@ TODO:
 
 - [x] Crack settings API
 - [x] Custom verifications
-- [ ] Remove labeler limit
+- [x] Remove labeler limit
 - [ ] Ability to turn off AppLabelers
 - [x] Constellation
 - [ ] Add niche features
