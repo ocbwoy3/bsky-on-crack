@@ -6,13 +6,17 @@ Bluesky on Crack.
 TODO:
 
 - [x] Crack settings API
+- [x] Constellation
 - [x] Custom verifications
 - [x] Remove labeler limit
+- [x] Option to disable suggested friends
 - [ ] Ability to turn off AppLabelers
-- [x] Constellation
 - [ ] Add niche features
 - [ ] Add ability to edit posts
 - [ ] Restore backdated posts
+- [ ] "Alter Ego" feature (client-side custom profile details)
+- [ ] Statsig editor (gates are at
+      `~/Developer/BlueskyOnCrack/src/lib/statsig/gates.ts`)
 
 ## Development Resources
 
