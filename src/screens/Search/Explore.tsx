@@ -69,6 +69,7 @@ import {Loader} from '#/components/Loader'
 import * as ProfileCard from '#/components/ProfileCard'
 import {SubtleHover} from '#/components/SubtleHover'
 import {Text} from '#/components/Typography'
+import {ExploreScreenLiveEventFeedsBanner} from '#/features/liveEvents/components/ExploreScreenLiveEventFeedsBanner'
 import * as ModuleHeader from './components/ModuleHeader'
 import {
   SuggestedAccountsTabBar,
@@ -201,6 +202,10 @@ type ExploreScreenItems =
   | {
       type: 'interests-card'
       key: 'interests-card'
+    }
+  | {
+      type: 'liveEventFeedsBanner'
+      key: string
     }
 
 export function Explore({
@@ -690,6 +695,8 @@ export function Explore({
     i.push(topBorder)
     i.push(...interestsNuxModule)
 
+    i.push({type: 'liveEventFeedsBanner', key: 'liveEventFeedsBanner'})
+
     if (useFullExperience) {
       i.push(trendingTopicsModule)
       i.push(...suggestedFeedsModule)
@@ -1003,6 +1010,9 @@ export function Explore({
         }
         case 'interests-card': {
           return <ExploreInterestsCard />
+        }
+        case 'liveEventFeedsBanner': {
+          return <ExploreScreenLiveEventFeedsBanner />
         }
       }
     },
