@@ -25,6 +25,7 @@ import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {NavSignupCard} from '#/view/shell/NavSignupCard'
 import {atoms as a, tokens, useTheme, web} from '#/alf'
 import {Button, ButtonIcon, ButtonText} from '#/components/Button'
+import {AgField} from '#/components/crack/AgField'
 import {Divider} from '#/components/Divider'
 import {
   Bell_Filled_Corner0_Rounded as BellFilled,
@@ -78,22 +79,33 @@ let DrawerProfileCard = ({
       accessibilityHint={_(msg`Navigates to your profile`)}
       onPress={onPressProfile}
       style={[a.gap_sm, a.pr_lg]}>
-      <UserAvatar
-        size={52}
-        avatar={profile?.avatar}
-        // See https://github.com/bluesky-social/social-app/pull/1801:
-        usePlainRNImage={true}
-        type={profile?.associated?.labeler ? 'labeler' : 'user'}
-        live={live}
-      />
+      <AgField field="avatar" value={profile?.avatar} did={account.did}>
+        {avatar => (
+          <UserAvatar
+            size={52}
+            avatar={avatar}
+            // See https://github.com/bluesky-social/social-app/pull/1801:
+            usePlainRNImage={true}
+            type={profile?.associated?.labeler ? 'labeler' : 'user'}
+            live={live}
+          />
+        )}
+      </AgField>
       <View style={[a.gap_2xs]}>
         <View style={[a.flex_row, a.align_center, a.gap_xs, a.flex_1]}>
-          <Text
-            emoji
-            style={[a.font_bold, a.text_xl, a.mt_2xs, a.leading_tight]}
-            numberOfLines={1}>
-            {profile?.displayName || account.handle}
-          </Text>
+          <AgField
+            field="displayName"
+            value={profile?.displayName || account.handle}
+            did={account.did}>
+            {displayNameValue => (
+              <Text
+                emoji
+                style={[a.font_bold, a.text_xl, a.mt_2xs, a.leading_tight]}
+                numberOfLines={1}>
+                {displayNameValue}
+              </Text>
+            )}
+          </AgField>
           {verification.showBadge && (
             <View
               style={{
@@ -110,7 +122,9 @@ let DrawerProfileCard = ({
           emoji
           style={[t.atoms.text_contrast_medium, a.text_md, a.leading_tight]}
           numberOfLines={1}>
-          {sanitizeHandle(account.handle, '@')}
+          <AgField field="handle" value={account.handle} did={account.did}>
+            {handleValue => sanitizeHandle(handleValue, '@')}
+          </AgField>
         </Text>
       </View>
       <Text style={[a.text_md, t.atoms.text_contrast_medium]}>

@@ -40,6 +40,7 @@ import {unstableCacheProfileView} from '#/state/queries/unstable-profile-cache'
 import {EditImageDialog} from '#/view/com/composer/photos/EditImageDialog'
 import {atoms as a, tokens, useTheme} from '#/alf'
 import {Button} from '#/components/Button'
+import {AgField} from '#/components/crack/AgField'
 import {useDialogControl} from '#/components/Dialog'
 import {useSheetWrapper} from '#/components/Dialog/sheet-wrapper'
 import {
@@ -553,13 +554,17 @@ let PreviewableUserAvatar = ({
   }, [liveControl, playHaptic, profile.did])
 
   const avatarEl = (
-    <UserAvatar
-      avatar={profile.avatar}
-      moderation={moderation}
-      type={profile.associated?.labeler ? 'labeler' : 'user'}
-      live={status.isActive || live}
-      {...props}
-    />
+    <AgField field="avatar" value={profile.avatar} did={profile.did}>
+      {avatar => (
+        <UserAvatar
+          avatar={avatar}
+          moderation={moderation}
+          type={profile.associated?.labeler ? 'labeler' : 'user'}
+          live={status.isActive || live}
+          {...props}
+        />
+      )}
+    </AgField>
   )
 
   const linkStyle =
@@ -572,40 +577,64 @@ let PreviewableUserAvatar = ({
       {disableNavigation ? (
         avatarEl
       ) : status.isActive && (isNative || isTouchDevice) ? (
-        <>
-          <Button
-            label={_(
-              msg`${sanitizeDisplayName(
-                profile.displayName || sanitizeHandle(profile.handle),
-              )}'s avatar`,
-            )}
-            accessibilityHint={_(msg`Opens live status dialog`)}
-            onPress={onOpenLiveStatus}>
-            {avatarEl}
-          </Button>
-          <LiveStatusDialog
-            control={liveControl}
-            profile={profile}
-            status={status}
-            embed={status.embed}
-          />
-        </>
-      ) : (
-        <Link
-          label={_(
-            msg`${sanitizeDisplayName(
-              profile.displayName || sanitizeHandle(profile.handle),
-            )}'s avatar`,
+        <AgField
+          field="displayName"
+          value={profile.displayName}
+          did={profile.did}>
+          {displayNameValue => (
+            <AgField field="handle" value={profile.handle} did={profile.did}>
+              {handleValue => {
+                const label = sanitizeDisplayName(
+                  displayNameValue || sanitizeHandle(handleValue),
+                )
+                return (
+                  <>
+                    <Button
+                      label={_(msg`${label}'s avatar`)}
+                      accessibilityHint={_(msg`Opens live status dialog`)}
+                      onPress={onOpenLiveStatus}>
+                      {avatarEl}
+                    </Button>
+                    <LiveStatusDialog
+                      control={liveControl}
+                      profile={profile}
+                      status={status}
+                      embed={status.embed}
+                    />
+                  </>
+                )
+              }}
+            </AgField>
           )}
-          accessibilityHint={_(msg`Opens this profile`)}
-          to={makeProfileLink({
-            did: profile.did,
-            handle: profile.handle,
-          })}
-          onPress={onPress}
-          style={linkStyle}>
-          {avatarEl}
-        </Link>
+        </AgField>
+      ) : (
+        <AgField
+          field="displayName"
+          value={profile.displayName}
+          did={profile.did}>
+          {displayNameValue => (
+            <AgField field="handle" value={profile.handle} did={profile.did}>
+              {handleValue => {
+                const label = sanitizeDisplayName(
+                  displayNameValue || sanitizeHandle(handleValue),
+                )
+                return (
+                  <Link
+                    label={_(msg`${label}'s avatar`)}
+                    accessibilityHint={_(msg`Opens this profile`)}
+                    to={makeProfileLink({
+                      did: profile.did,
+                      handle: profile.handle,
+                    })}
+                    onPress={onPress}
+                    style={linkStyle}>
+                    {avatarEl}
+                  </Link>
+                )
+              }}
+            </AgField>
+          )}
+        </AgField>
       )}
     </ProfileHoverCard>
   )

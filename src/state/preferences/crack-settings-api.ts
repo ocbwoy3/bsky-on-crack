@@ -12,6 +12,8 @@ export const crackSettingsDefaults: CrackSettings = {
   hijackHideLabels: false,
   hideSuggestedAccounts: false,
   alterEgoUri: undefined,
+  alterEgoByDid: {},
+  alterEgoRecords: {},
 }
 
 export type CrackSettingsToggleItem = {

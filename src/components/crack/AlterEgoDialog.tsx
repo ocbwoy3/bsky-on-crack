@@ -1,17 +1,25 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {View} from 'react-native'
 import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 
+import {parseAlterEgoUri} from '#/lib/crack/alter-ego'
 import {logger} from '#/logger'
-import {fetchAlterEgoProfile, useAlterEgoOverlay} from '#/state/crack/alter-ego'
+import {
+  fetchAlterEgoProfile,
+  useSetActiveAlterEgo,
+} from '#/state/crack/alter-ego'
 import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
 import {useAgent} from '#/state/session'
 import * as Toast from '#/view/com/util/Toast'
+import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {atoms as a, useTheme, web} from '#/alf'
-import {Button, ButtonText} from '#/components/Button'
+import {Button, ButtonIcon, ButtonText} from '#/components/Button'
+import {AlterEgoEditorDialog} from '#/components/crack/AlterEgoEditorDialog'
 import * as Dialog from '#/components/Dialog'
 import * as TextField from '#/components/forms/TextField'
+import {Check_Stroke2_Corner0_Rounded as CheckIcon} from '#/components/icons/Check'
+import {Pencil_Stroke2_Corner0_Rounded as EditIcon} from '#/components/icons/Pencil'
 import {Text} from '#/components/Typography'
 
 export function AlterEgoDialog({
@@ -24,38 +32,69 @@ export function AlterEgoDialog({
   const agent = useAgent()
   const settings = useCrackSettings()
   const {update} = useCrackSettingsApi()
-  const {data: overlay, isFetching} = useAlterEgoOverlay()
+  const setActiveAlterEgo = useSetActiveAlterEgo()
   const [draftUri, setDraftUri] = useState(settings.alterEgoUri ?? '')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const editorControl = Dialog.useDialogControl()
+  const [editorUri, setEditorUri] = useState<string | null>(null)
 
   useEffect(() => {
     setDraftUri(settings.alterEgoUri ?? '')
   }, [settings.alterEgoUri])
 
+  const activeByDid = useMemo(
+    () => settings.alterEgoByDid ?? {},
+    [settings.alterEgoByDid],
+  )
+  const activeDid = useMemo(
+    () => Object.entries(activeByDid).find(([, uri]) => uri)?.[0] ?? undefined,
+    [activeByDid],
+  )
+  const activeUri = activeDid ? activeByDid[activeDid] : undefined
+  const activeRecord = activeUri ? settings.alterEgoRecords?.[activeUri] : null
+  const storedRecords = useMemo(
+    () => Object.values(settings.alterEgoRecords ?? {}),
+    [settings.alterEgoRecords],
+  )
+
   const applyAlterEgo = async () => {
     const nextUri = draftUri.trim()
     if (!nextUri) {
-      setError('Enter an at:// URI for an alter ego record.')
+      setError(_(msg`Enter an at:// URI for an alter ego record.`))
       return
     }
     setIsSaving(true)
     setError(null)
     try {
-      await fetchAlterEgoProfile({agent, uri: nextUri})
-      update({alterEgoUri: nextUri})
+      const parsed = parseAlterEgoUri(nextUri)
+      if (!parsed) {
+        throw new Error(_(msg`Invalid alter ego URI.`))
+      }
+      const overlayProfile = await fetchAlterEgoProfile({agent, uri: nextUri})
+      update({
+        alterEgoRecords: {
+          ...(settings.alterEgoRecords ?? {}),
+          [overlayProfile.uri]: overlayProfile,
+        },
+      })
+      setActiveAlterEgo(parsed.repo, nextUri)
       Toast.show(_(msg`Alter ego applied.`))
       control.close()
     } catch (err: any) {
       logger.error('Failed to apply alter ego', {err})
-      setError(err?.message || 'Failed to apply alter ego.')
+      setError(err?.message || _(msg`Failed to apply alter ego.`))
     } finally {
       setIsSaving(false)
     }
   }
 
   const clearAlterEgo = () => {
-    update({alterEgoUri: undefined})
+    if (!activeDid) {
+      update({alterEgoUri: undefined})
+      return
+    }
+    setActiveAlterEgo(activeDid, null)
     setDraftUri('')
     setError(null)
     Toast.show(_(msg`Alter ego cleared.`))
@@ -76,66 +115,180 @@ export function AlterEgoDialog({
             </Trans>
           </Text>
 
-          <View style={[a.gap_sm]}>
-            <TextField.LabelText>
-              <Trans>Alter ego record URI</Trans>
-            </TextField.LabelText>
-            <TextField.Root isInvalid={Boolean(error)}>
-              <Dialog.Input
-                value={draftUri}
-                onChangeText={value => {
-                  setDraftUri(value)
-                  setError(null)
-                }}
-                autoCapitalize="none"
-                autoCorrect={false}
-                label="at://did:plc:example/dev.ocbwoy3.crack.alterego/..."
-              />
-            </TextField.Root>
-            {error && (
-              <Text style={[a.text_sm, {color: t.palette.negative_400}]}>
-                {error}
-              </Text>
-            )}
-          </View>
-
-          {settings.alterEgoUri && (
-            <View style={[a.gap_xs]}>
+          {activeUri && (
+            <View style={[a.gap_sm, a.rounded_md, a.p_md, t.atoms.bg]}>
               <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
-                <Trans>Active alter ego</Trans>
+                <Trans>Alter Ego</Trans>
               </Text>
               <Text style={[a.text_md, a.font_semi_bold]}>
-                {overlay?.displayName ||
-                  overlay?.handle ||
-                  settings.alterEgoUri}
+                {activeRecord?.displayName ||
+                  activeRecord?.handle ||
+                  activeUri ||
+                  draftUri}
               </Text>
+              <Button
+                variant="solid"
+                color="secondary"
+                size="small"
+                label={_(msg`Unset alter ego`)}
+                disabled={!activeUri || isSaving}
+                onPress={clearAlterEgo}>
+                <ButtonText>{_(msg`Unset alter ego`)}</ButtonText>
+              </Button>
             </View>
           )}
 
-          <View style={[a.flex_row, a.justify_between, a.gap_sm]}>
-            <Button
-              variant="solid"
-              color="secondary"
-              size="small"
-              label={_(msg`Clear`)}
-              disabled={!settings.alterEgoUri || isSaving}
-              onPress={clearAlterEgo}>
-              <ButtonText>{_(msg`Clear`)}</ButtonText>
-            </Button>
-            <Button
-              variant="solid"
-              color="primary"
-              size="small"
-              label={_(msg`Apply`)}
-              disabled={isSaving || isFetching}
-              onPress={applyAlterEgo}>
-              <ButtonText>
-                {isSaving ? _(msg`Applying...`) : _(msg`Apply`)}
-              </ButtonText>
-            </Button>
+          <View style={[a.gap_md]}>
+            <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
+              <Trans>Your Alter Egos</Trans>
+            </Text>
+            <View style={[a.rounded_md, a.border, t.atoms.border_contrast_low]}>
+              <View style={[a.p_md, a.gap_sm]}>
+                <TextField.LabelText>
+                  <Trans>Alter ego record URI</Trans>
+                </TextField.LabelText>
+                <TextField.Root isInvalid={Boolean(error)}>
+                  <Dialog.Input
+                    value={draftUri}
+                    onChangeText={value => {
+                      setDraftUri(value)
+                      setError(null)
+                    }}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    label="at://did:plc:example/dev.ocbwoy3.crack.alterego/..."
+                  />
+                </TextField.Root>
+                {error && (
+                  <Text style={[a.text_sm, {color: t.palette.negative_400}]}>
+                    {error}
+                  </Text>
+                )}
+                <View style={[a.flex_row, a.gap_sm]}>
+                  <Button
+                    variant="solid"
+                    color="primary"
+                    size="small"
+                    label={_(msg`Use alter ego`)}
+                    disabled={isSaving}
+                    onPress={applyAlterEgo}>
+                    <ButtonIcon icon={CheckIcon} />
+                    <ButtonText>
+                      {isSaving ? _(msg`Applying...`) : _(msg`Use alter ego`)}
+                    </ButtonText>
+                  </Button>
+                  <Button
+                    variant="solid"
+                    color="secondary"
+                    size="small"
+                    label={_(msg`Edit`)}
+                    disabled={!draftUri.trim()}
+                    onPress={() => {
+                      const targetUri = draftUri.trim()
+                      if (!targetUri) {
+                        setError(
+                          _(msg`Enter an at:// URI for an alter ego record.`),
+                        )
+                        return
+                      }
+                      setEditorUri(targetUri)
+                      control.close(() => editorControl.open())
+                    }}>
+                    <ButtonIcon icon={EditIcon} />
+                    <ButtonText>{_(msg`Edit`)}</ButtonText>
+                  </Button>
+                </View>
+              </View>
+            </View>
+
+            {storedRecords.length > 0 && (
+              <View style={[a.gap_sm]}>
+                {storedRecords.map(record => {
+                  const recordDid = parseAlterEgoUri(record.uri)?.repo
+                  const isActive = Boolean(
+                    recordDid && activeByDid[recordDid] === record.uri,
+                  )
+                  return (
+                    <View
+                      key={record.uri}
+                      style={[
+                        a.rounded_md,
+                        a.border,
+                        a.p_md,
+                        a.gap_sm,
+                        t.atoms.border_contrast_low,
+                        isActive && t.atoms.bg_contrast_25,
+                      ]}>
+                      <View style={[a.flex_row, a.align_center, a.gap_sm]}>
+                        <UserAvatar
+                          size={40}
+                          avatar={record.avatar}
+                          type="user"
+                        />
+                        <View style={[a.flex_1]}>
+                          <Text style={[a.text_md, a.font_semi_bold]}>
+                            {record.displayName || record.handle || record.uri}
+                          </Text>
+                          {record.handle && (
+                            <Text
+                              style={[a.text_sm, t.atoms.text_contrast_medium]}>
+                              @{record.handle}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      {record.description && (
+                        <Text
+                          style={[a.text_sm, t.atoms.text_contrast_medium]}
+                          numberOfLines={2}>
+                          {record.description}
+                        </Text>
+                      )}
+                      <View style={[a.flex_row, a.gap_sm]}>
+                        <Button
+                          variant="solid"
+                          color="primary"
+                          size="small"
+                          label={_(msg`Use alter ego`)}
+                          disabled={!recordDid || isSaving || isActive}
+                          onPress={() => {
+                            if (!recordDid) return
+                            setActiveAlterEgo(recordDid, record.uri)
+                            Toast.show(_(msg`Alter ego applied.`))
+                          }}>
+                          <ButtonIcon icon={CheckIcon} />
+                          <ButtonText>
+                            {isActive ? _(msg`Active`) : _(msg`Use alter ego`)}
+                          </ButtonText>
+                        </Button>
+                        <Button
+                          variant="solid"
+                          color="secondary"
+                          size="small"
+                          label={_(msg`Edit`)}
+                          onPress={() => {
+                            setEditorUri(record.uri)
+                            control.close(() => editorControl.open())
+                          }}>
+                          <ButtonIcon icon={EditIcon} />
+                          <ButtonText>{_(msg`Edit`)}</ButtonText>
+                        </Button>
+                      </View>
+                    </View>
+                  )
+                })}
+              </View>
+            )}
           </View>
         </View>
       </Dialog.ScrollableInner>
+      <AlterEgoEditorDialog
+        control={editorControl}
+        uri={editorUri}
+        onDismiss={() => {
+          setEditorUri(null)
+        }}
+      />
     </Dialog.Outer>
   )
 }

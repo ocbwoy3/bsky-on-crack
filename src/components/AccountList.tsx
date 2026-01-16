@@ -13,6 +13,7 @@ import {type SessionAccount, useSession} from '#/state/session'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {atoms as a, useTheme} from '#/alf'
 import {Button} from '#/components/Button'
+import {AgField} from '#/components/crack/AgField'
 import {CheckThick_Stroke2_Corner0_Rounded as CheckIcon} from '#/components/icons/Check'
 import {ChevronRight_Stroke2_Corner0_Rounded as ChevronIcon} from '#/components/icons/Chevron'
 import {PlusLarge_Stroke2_Corner0_Rounded as PlusIcon} from '#/components/icons/Plus'
@@ -145,24 +146,35 @@ function AccountItem({
             a.gap_sm,
             (hovered || pressed || isPendingAccount) && t.atoms.bg_contrast_25,
           ]}>
-          <UserAvatar
-            avatar={profile?.avatar}
-            size={48}
-            type={profile?.associated?.labeler ? 'labeler' : 'user'}
-            live={live}
-            hideLiveBadge
-          />
+          <AgField field="avatar" value={profile?.avatar} did={account.did}>
+            {avatar => (
+              <UserAvatar
+                avatar={avatar}
+                size={48}
+                type={profile?.associated?.labeler ? 'labeler' : 'user'}
+                live={live}
+                hideLiveBadge
+              />
+            )}
+          </AgField>
 
           <View style={[a.flex_1, a.gap_2xs, a.pr_2xl]}>
             <View style={[a.flex_row, a.align_center, a.gap_xs]}>
-              <Text
-                emoji
-                style={[a.font_medium, a.leading_tight, a.text_md]}
-                numberOfLines={1}>
-                {sanitizeDisplayName(
-                  profile?.displayName || profile?.handle || account.handle,
+              <AgField
+                field="displayName"
+                value={
+                  profile?.displayName || profile?.handle || account.handle
+                }
+                did={account.did}>
+                {displayNameValue => (
+                  <Text
+                    emoji
+                    style={[a.font_medium, a.leading_tight, a.text_md]}
+                    numberOfLines={1}>
+                    {sanitizeDisplayName(displayNameValue)}
+                  </Text>
                 )}
-              </Text>
+              </AgField>
               {verification.showBadge && (
                 <View>
                   <VerificationCheck
@@ -178,7 +190,9 @@ function AccountItem({
                 t.atoms.text_contrast_medium,
                 a.text_sm,
               ]}>
-              {sanitizeHandle(account.handle, '@')}
+              <AgField field="handle" value={account.handle} did={account.did}>
+                {handleValue => sanitizeHandle(handleValue, '@')}
+              </AgField>
             </Text>
             {isLoggedOut && (
               <Text

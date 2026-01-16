@@ -21,6 +21,7 @@ import {sanitizeDisplayName} from '#/lib/strings/display-names'
 import {sanitizeHandle} from '#/lib/strings/handles'
 import {isIOS, isNative} from '#/platform/detection'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import * as persisted from '#/state/persisted'
 import {clearStorage} from '#/state/persisted'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
@@ -332,12 +333,14 @@ function ProfilePreview({
     profile: shadow,
   })
   const {isActive: live} = useActorStatus(profile)
+  const displayProfile = useAlterEgoProfileFields(profile)
 
   if (!moderationOpts) return null
 
   const moderation = moderateProfile(profile, moderationOpts)
   const displayName = sanitizeDisplayName(
-    profile.displayName || sanitizeHandle(profile.handle),
+    displayProfile.displayName ||
+      sanitizeHandle(displayProfile.handle || profile.handle),
     moderation.ui('displayName'),
   )
 
@@ -345,7 +348,7 @@ function ProfilePreview({
     <>
       <UserAvatar
         size={80}
-        avatar={shadow.avatar}
+        avatar={displayProfile.avatar}
         moderation={moderation.ui('avatar')}
         type={shadow.associated?.labeler ? 'labeler' : 'user'}
         live={live}
@@ -383,7 +386,7 @@ function ProfilePreview({
         )}
       </View>
       <Text style={[a.text_md, a.leading_snug, t.atoms.text_contrast_medium]}>
-        {sanitizeHandle(profile.handle, '@')}
+        {sanitizeHandle(displayProfile.handle || profile.handle, '@')}
       </Text>
     </>
   )

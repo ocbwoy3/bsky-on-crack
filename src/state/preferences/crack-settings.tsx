@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {parseAlterEgoUri} from '#/lib/crack/alter-ego'
 import {isWeb} from '#/platform/detection'
 import * as persisted from '#/state/persisted'
 import {
@@ -23,6 +24,18 @@ apiContext.displayName = 'CrackSettingsApiContext'
 
 function resolveSettings(settings?: persisted.Schema['crackSettings']) {
   const legacyKawaii = persisted.get('kawaii')
+  const alterEgoByDid = {...(settings?.alterEgoByDid ?? {})}
+  const alterEgoRecords = {...(settings?.alterEgoRecords ?? {})}
+  if (
+    settings?.alterEgoUri &&
+    Object.keys(alterEgoByDid).length === 0 &&
+    !alterEgoRecords[settings.alterEgoUri]
+  ) {
+    const parsed = parseAlterEgoUri(settings.alterEgoUri)
+    if (parsed) {
+      alterEgoByDid[parsed.repo] = settings.alterEgoUri
+    }
+  }
   return {
     ...defaultSettings,
     ...settings,
@@ -31,6 +44,8 @@ function resolveSettings(settings?: persisted.Schema['crackSettings']) {
       (typeof legacyKawaii === 'boolean'
         ? legacyKawaii
         : defaultSettings.kawaiiMode),
+    alterEgoByDid,
+    alterEgoRecords,
   }
 }
 

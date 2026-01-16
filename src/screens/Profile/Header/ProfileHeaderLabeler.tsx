@@ -5,7 +5,7 @@ import {
   type AppBskyLabelerDefs,
   moderateProfile,
   type ModerationOpts,
-  type RichText as RichTextAPI,
+  RichText as RichTextAPI,
 } from '@atproto/api'
 import {msg, Plural, plural, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
@@ -25,6 +25,7 @@ import {useRequireAuth, useSession} from '#/state/session'
 import {ProfileMenu} from '#/view/com/profile/ProfileMenu'
 import {atoms as a, tokens, useTheme} from '#/alf'
 import {Button, ButtonText} from '#/components/Button'
+import {AgField} from '#/components/crack/AgField'
 import {type DialogOuterProps, useDialogControl} from '#/components/Dialog'
 import {
   Heart2_Filled_Stroke2_Corner0_Rounded as HeartFilled,
@@ -124,18 +125,34 @@ let ProfileHeaderLabeler = ({
         {!isPlaceholderProfile && (
           <>
             {isSelf && <ProfileHeaderMetrics profile={profile} />}
-            {descriptionRT && !moderation.ui('profileView').blur ? (
-              <View pointerEvents="auto">
-                <RichText
-                  testID="profileHeaderDescription"
-                  style={[a.text_md]}
-                  numberOfLines={15}
-                  value={descriptionRT}
-                  enableTags
-                  authorHandle={profile.handle}
-                />
-              </View>
-            ) : undefined}
+            <AgField
+              field="description"
+              value={profile.description ?? ''}
+              did={profile.did}>
+              {alterDescription => {
+                const description =
+                  alterDescription === profile.description && descriptionRT
+                    ? descriptionRT
+                    : alterDescription
+                      ? new RichTextAPI({text: alterDescription})
+                      : null
+                if (!description || moderation.ui('profileView').blur) {
+                  return null
+                }
+                return (
+                  <View pointerEvents="auto">
+                    <RichText
+                      testID="profileHeaderDescription"
+                      style={[a.text_md]}
+                      numberOfLines={15}
+                      value={description}
+                      enableTags
+                      authorHandle={profile.handle}
+                    />
+                  </View>
+                )
+              }}
+            </AgField>
             {!isAppLabeler(profile.did) && (
               <View style={[a.flex_row, a.gap_xs, a.align_center, a.pt_lg]}>
                 <Button

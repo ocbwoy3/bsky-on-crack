@@ -601,6 +601,19 @@ Only use `useMemo`/`useCallback` when you have a specific reason, such as:
 - You're passing a callback to a non-React library that needs referential
   stability
 
+## Alter Ego System
+
+The Alter Ego system provides a UI-only profile overlay using
+`dev.ocbwoy3.crack.alterego` records.
+
+Key rules:
+- Never modify or override ATProto identity resolution
+- Never inject or hijack atproto client logic
+- Alter egos apply only at render time
+- All profile rendering must go through `<AgField />`
+
+Alter egos are activated per-DID and stored locally.
+
 ## Best Practices
 
 1. **Accessibility**: Always provide `label` prop for interactive elements, use

@@ -13,6 +13,7 @@ import {msg} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 
 import {sanitizeHandle} from '#/lib/strings/handles'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {formatCount} from '#/view/com/util/numeric/format'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {type VideoFeedSourceContext} from '#/screens/VideoFeed/types'
@@ -72,13 +73,13 @@ export function VideoPostCard({
     return modui
   }, [moderation])
 
+  const author = post.author
+  const displayAuthor = useAlterEgoProfileFields(author)
   /**
    * Filtering should be done at a higher level, such as `PostFeed` or
    * `PostFeedVideoGridRow`, but we need to protect here as well.
    */
   if (!AppBskyEmbedVideo.isView(embed)) return null
-
-  const author = post.author
   const text = bsky.dangerousIsType<AppBskyFeedPost.Record>(
     post.record,
     AppBskyFeedPost.isRecord,
@@ -99,7 +100,7 @@ export function VideoPostCard({
       )}
       <View style={[a.flex_row, a.gap_xs, a.align_center]}>
         <View style={[a.relative, a.rounded_full, {width: 20, height: 20}]}>
-          <UserAvatar type="user" size={20} avatar={post.author.avatar} />
+          <UserAvatar type="user" size={20} avatar={displayAuthor.avatar} />
           <MediaInsetBorder />
         </View>
         <Text
@@ -110,7 +111,7 @@ export function VideoPostCard({
             t.atoms.text_contrast_medium,
           ]}
           numberOfLines={1}>
-          {sanitizeHandle(post.author.handle, '@')}
+          {sanitizeHandle(displayAuthor.handle || post.author.handle, '@')}
         </Text>
       </View>
     </View>
@@ -119,7 +120,9 @@ export function VideoPostCard({
   return (
     <Link
       accessibilityHint={_(msg`Views video in immersive mode`)}
-      label={_(msg`Video from ${author.handle}: ${text}`)}
+      label={_(
+        msg`Video from ${displayAuthor.handle || author.handle}: ${text}`,
+      )}
       to={{
         screen: 'VideoFeed',
         params: {

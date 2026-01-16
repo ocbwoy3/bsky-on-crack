@@ -19,6 +19,7 @@ import {
 import {useGate} from '#/lib/statsig/statsig'
 import {sanitizeDisplayName} from '#/lib/strings/display-names'
 import {isInvalidHandle, sanitizeHandle} from '#/lib/strings/handles'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {emitSoftReset} from '#/state/events'
 import {useHomeBadge} from '#/state/home-badge'
 import {useFetchHandle} from '#/state/queries/handle'
@@ -95,6 +96,9 @@ function ProfileCard() {
   const size = 48
 
   const profile = profiles?.find(p => p.did === currentAccount!.did)
+  const displayProfile = useAlterEgoProfileFields(
+    profile ?? {did: currentAccount?.did ?? ''},
+  )
   const otherAccounts = accounts
     .filter(acc => acc.did !== currentAccount!.did)
     .map(account => ({
@@ -143,7 +147,7 @@ function ProfileCard() {
                       },
                     ]}>
                     <UserAvatar
-                      avatar={profile.avatar}
+                      avatar={displayProfile.avatar}
                       size={size}
                       type={profile?.associated?.labeler ? 'labeler' : 'user'}
                       live={live}
@@ -165,7 +169,7 @@ function ProfileCard() {
                           style={[a.font_bold, a.text_sm, a.leading_snug]}
                           numberOfLines={1}>
                           {sanitizeDisplayName(
-                            profile.displayName || profile.handle,
+                            displayProfile.displayName || displayProfile.handle,
                           )}
                         </Text>
                         <Text
@@ -175,7 +179,7 @@ function ProfileCard() {
                             t.atoms.text_contrast_medium,
                           ]}
                           numberOfLines={1}>
-                          {sanitizeHandle(profile.handle, '@')}
+                          {sanitizeHandle(displayProfile.handle, '@')}
                         </Text>
                       </View>
                       <EllipsisIcon
@@ -353,6 +357,7 @@ function SwitchMenuItem({
   const {_} = useLingui()
   const {onPressSwitchAccount, pendingDid} = useAccountSwitcher()
   const {isActive: live} = useActorStatus(profile)
+  const displayProfile = useAlterEgoProfileFields(profile ?? {did: account.did})
 
   return (
     <Menu.Item
@@ -361,14 +366,14 @@ function SwitchMenuItem({
       key={account.did}
       label={_(
         msg`Switch to ${sanitizeHandle(
-          profile?.handle ?? account.handle,
+          displayProfile.handle || profile?.handle || account.handle,
           '@',
         )}`,
       )}
       onPress={() => onPressSwitchAccount(account, 'SwitchAccount')}>
       <View>
         <UserAvatar
-          avatar={profile?.avatar}
+          avatar={displayProfile.avatar}
           size={20}
           type={profile?.associated?.labeler ? 'labeler' : 'user'}
           live={live}
@@ -376,7 +381,10 @@ function SwitchMenuItem({
         />
       </View>
       <Menu.ItemText>
-        {sanitizeHandle(profile?.handle ?? account.handle, '@')}
+        {sanitizeHandle(
+          displayProfile.handle || profile?.handle || account.handle,
+          '@',
+        )}
       </Menu.ItemText>
     </Menu.Item>
   )
