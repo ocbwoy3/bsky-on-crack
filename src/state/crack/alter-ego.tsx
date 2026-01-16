@@ -94,6 +94,28 @@ export function useActiveAlterEgo(did: string) {
   return activeUri ? settings.alterEgoRecords?.[activeUri] : undefined
 }
 
+export function useAlterEgoProfileFields<T extends {did: string}>(
+  profile: T,
+): T & {
+  avatar?: string
+  banner?: string
+  displayName?: string
+  description?: string
+  handle?: string
+} {
+  const alter = useActiveAlterEgo(profile.did)
+  return {
+    ...profile,
+    avatar: alter?.avatar ?? (profile as {avatar?: string}).avatar,
+    banner: alter?.banner ?? (profile as {banner?: string}).banner,
+    displayName:
+      alter?.displayName ?? (profile as {displayName?: string}).displayName,
+    description:
+      alter?.description ?? (profile as {description?: string}).description,
+    handle: alter?.handle ?? (profile as {handle?: string}).handle,
+  }
+}
+
 export function useSetActiveAlterEgo() {
   const settings = useCrackSettings()
   const {update} = useCrackSettingsApi()

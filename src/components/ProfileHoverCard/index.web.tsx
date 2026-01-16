@@ -18,6 +18,7 @@ import {type NavigationProp} from '#/lib/routes/types'
 import {sanitizeDisplayName} from '#/lib/strings/display-names'
 import {sanitizeHandle} from '#/lib/strings/handles'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {usePrefetchProfileQuery, useProfileQuery} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
@@ -430,7 +431,8 @@ function Inner({
     () => moderateProfile(profile, moderationOpts),
     [profile, moderationOpts],
   )
-  const [descriptionRT] = useRichText(profile.description ?? '')
+  const displayProfile = useAlterEgoProfileFields(profile)
+  const [descriptionRT] = useRichText(displayProfile.description ?? '')
   const profileShadow = useProfileShadow(profile)
   const {follow, unfollow} = useFollowMethods({
     profile: profileShadow,
@@ -467,7 +469,7 @@ function Inner({
         <Link to={profileURL} label={_(msg`View profile`)} onPress={hide}>
           <UserAvatar
             size={64}
-            avatar={profile.avatar}
+            avatar={displayProfile.avatar}
             type={isLabeler ? 'labeler' : 'user'}
             moderation={moderation.ui('avatar')}
           />
@@ -523,7 +525,8 @@ function Inner({
                 a.self_start,
               ]}>
               {sanitizeDisplayName(
-                profile.displayName || sanitizeHandle(profile.handle),
+                displayProfile.displayName ||
+                  sanitizeHandle(displayProfile.handle || profile.handle),
                 moderation.ui('displayName'),
               )}
             </Text>
@@ -585,7 +588,8 @@ function Inner({
             </InlineLinkText>
           </View>
 
-          {profile.description?.trim() && !moderation.ui('profileView').blur ? (
+          {displayProfile.description?.trim() &&
+          !moderation.ui('profileView').blur ? (
             <View style={[a.pt_md]}>
               <RichText
                 numberOfLines={8}

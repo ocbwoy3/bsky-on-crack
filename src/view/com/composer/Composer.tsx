@@ -77,6 +77,7 @@ import {cleanError} from '#/lib/strings/errors'
 import {colors} from '#/lib/styles'
 import {logger} from '#/logger'
 import {isAndroid, isIOS, isNative, isWeb} from '#/platform/detection'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useDialogStateControlContext} from '#/state/dialogs'
 import {emitPostCreated} from '#/state/events'
 import {
@@ -847,6 +848,9 @@ let ComposerPost = React.memo(function ComposerPost({
   const currentDid = currentAccount!.did
   const {_} = useLingui()
   const {data: currentProfile} = useProfileQuery({did: currentDid})
+  const displayProfile = useAlterEgoProfileFields(
+    currentProfile ?? {did: currentDid},
+  )
   const richtext = post.richtext
   const isTextOnly = !post.embed.link && !post.embed.quote && !post.embed.media
   const forceMinHeight = isWeb && isTextOnly && isActive
@@ -925,7 +929,7 @@ let ComposerPost = React.memo(function ComposerPost({
       ]}>
       <View style={[a.flex_row, isNative && a.flex_1]}>
         <UserAvatar
-          avatar={currentProfile?.avatar}
+          avatar={displayProfile.avatar}
           size={42}
           type={currentProfile?.associated?.labeler ? 'labeler' : 'user'}
           style={[a.mt_xs]}
@@ -1409,6 +1413,7 @@ function ComposerFooter({
 
       if (assets.length) {
         if (type === 'image') {
+          // eslint-disable-next-line @typescript-eslint/no-shadow
           const images: ComposerImage[] = []
 
           await Promise.all(
