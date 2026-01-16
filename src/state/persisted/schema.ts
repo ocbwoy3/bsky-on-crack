@@ -144,6 +144,7 @@ const schema = z.object({
           }),
         )
         .optional(),
+      statsigGateOverrides: z.record(z.boolean()).optional(),
     })
     .optional(),
   hasCheckedForStarterPack: z.boolean().optional(),
@@ -205,6 +206,7 @@ export const defaults: Schema = {
     alterEgoUri: undefined,
     alterEgoByDid: {},
     alterEgoRecords: {},
+    statsigGateOverrides: {},
   },
   hasCheckedForStarterPack: false,
   subtitlesEnabled: true,

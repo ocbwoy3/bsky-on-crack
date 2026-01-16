@@ -1,7 +1,8 @@
 import {Fragment} from 'react'
 import {type ComponentType} from 'react'
 import {View} from 'react-native'
-import {Trans} from '@lingui/macro'
+import {msg, Trans} from '@lingui/macro'
+import {useLingui} from '@lingui/react'
 import {useNavigation} from '@react-navigation/native'
 import {type NativeStackScreenProps} from '@react-navigation/native-stack'
 
@@ -9,6 +10,12 @@ import {
   type CommonNavigatorParams,
   type NavigationProp,
 } from '#/lib/routes/types'
+import {GATES} from '#/lib/statsig/gates'
+import {useGate} from '#/lib/statsig/statsig'
+import {
+  useSetStatsigGateOverride,
+  useStatsigGateOverrides,
+} from '#/state/crack/statsig-overrides'
 import {emitOpenSettingsHelpModal, emitOpenWelcomeModal} from '#/state/events'
 import {
   type CrackSettings,
@@ -51,6 +58,7 @@ export function CrackSettingsScreen({}: Props) {
   const {update} = useCrackSettingsApi()
   const navigation = useNavigation<NavigationProp>()
   const alterEgoDialogControl = useDialogControl()
+  const gate = useGate()
 
   const onToggleSetting = (key: keyof CrackSettings, value: boolean) => {
     update({[key]: value} as Partial<CrackSettings>)
@@ -136,10 +144,79 @@ export function CrackSettingsScreen({}: Props) {
               </View>
             )
           })}
+          <StatsigSection gate={gate} />
         </View>
       </Layout.Content>
       <AlterEgoDialog control={alterEgoDialogControl} />
     </Layout.Screen>
+  )
+}
+
+function StatsigSection({gate}: {gate: ReturnType<typeof useGate>}) {
+  const t = useTheme()
+  const {_} = useLingui()
+  const overrides = useStatsigGateOverrides()
+  const setOverride = useSetStatsigGateOverride()
+  const values = GATES.map(gateName => ({
+    gateName,
+    enabled: gate(gateName, {dangerouslyDisableExposureLogging: true}),
+    override: overrides[gateName],
+  }))
+
+  return (
+    <View style={[a.pt_2xl]}>
+      <Text
+        style={[
+          a.text_md,
+          a.font_semi_bold,
+          a.pb_md,
+          t.atoms.text_contrast_high,
+        ]}>
+        <Trans>Statsig</Trans>
+      </Text>
+      <View
+        style={[
+          a.w_full,
+          a.rounded_md,
+          a.overflow_hidden,
+          t.atoms.bg_contrast_25,
+        ]}>
+        {values.map(({gateName, enabled}, index) => (
+          <Fragment key={gateName}>
+            {index > 0 && <Divider />}
+            <ToggleRow
+              icon={FilterIcon}
+              title={gateName}
+              description={
+                typeof override === 'boolean'
+                  ? override
+                    ? _(msg`Overridden: Enabled`)
+                    : _(msg`Overridden: Disabled`)
+                  : enabled
+                    ? _(msg`Enabled`)
+                    : _(msg`Disabled`)
+              }
+              name={gateName}
+              value={typeof override === 'boolean' ? override : enabled}
+              onChange={next => setOverride(gateName, next)}
+            />
+          </Fragment>
+        ))}
+        <Divider />
+        <ActionRow
+          icon={FilterIcon}
+          title={_(msg`Clear gate overrides`)}
+          description={_(msg`Revert to remote gate values.`)}
+          onPress={() => {
+            for (const gateName of GATES) {
+              if (gateName in overrides) {
+                setOverride(gateName, null)
+              }
+            }
+          }}
+        />
+      </View>
+    </View>
   )
 }
 
@@ -164,6 +241,7 @@ function ToggleRow({
   name,
   value,
   onChange,
+  disabled = false,
 }: {
   icon: ComponentType<SVGIconProps>
   title: string
@@ -171,6 +249,7 @@ function ToggleRow({
   name: string
   value: boolean
   onChange: (next: boolean) => void
+  disabled?: boolean
 }) {
   const t = useTheme()
 
@@ -193,7 +272,12 @@ function ToggleRow({
           </Text>
         </View>
       </View>
-      <Toggle.Item label={title} name={name} value={value} onChange={onChange}>
+      <Toggle.Item
+        label={title}
+        name={name}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}>
         <Toggle.Switch />
       </Toggle.Item>
     </View>

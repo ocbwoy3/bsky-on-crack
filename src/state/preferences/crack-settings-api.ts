@@ -14,6 +14,7 @@ export const crackSettingsDefaults: CrackSettings = {
   alterEgoUri: undefined,
   alterEgoByDid: {},
   alterEgoRecords: {},
+  statsigGateOverrides: {},
 }
 
 export type CrackSettingsToggleItem = {
@@ -157,5 +158,11 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         predicate: () => Boolean(isWeb),
       },
     ],
+  },
+  {
+    id: 'statsig',
+    title: 'Statsig',
+    description: 'Feature gate values (read-only).',
+    items: [],
   },
 ]

@@ -26,6 +26,7 @@ import {logger} from '#/logger'
 import {isAndroid, isIOS} from '#/platform/detection'
 import {Provider as A11yProvider} from '#/state/a11y'
 import {Provider as MutedThreadsProvider} from '#/state/cache/thread-mutes'
+import {StatsigGateOverridesBootstrap} from '#/state/crack/statsig-overrides'
 import {Provider as DialogStateProvider} from '#/state/dialogs'
 import {Provider as EmailVerificationProvider} from '#/state/email-verification'
 import {listenSessionDropped} from '#/state/events'
@@ -146,6 +147,7 @@ function InnerApp() {
                 <QueryProvider currentDid={currentAccount?.did}>
                   <PolicyUpdateOverlayProvider>
                     <StatsigProvider>
+                      <StatsigGateOverridesBootstrap />
                       <LiveEventsProvider>
                         <AgeAssuranceV2Provider>
                           <ComposerProvider>

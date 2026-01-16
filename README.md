@@ -10,13 +10,13 @@ TODO:
 - [x] Custom verifications
 - [x] Remove labeler limit
 - [x] Option to disable suggested friends
+- [x] "Alter Ego" feature (client-side custom profile details)
+- [x] Statsig gates editor
+      (`~/Developer/BlueskyOnCrack/src/lib/statsig/gates.ts`)
 - [ ] Ability to turn off AppLabelers
 - [ ] Add niche features
 - [ ] Add ability to edit posts
 - [ ] Restore backdated posts
-- [ ] "Alter Ego" feature (client-side custom profile details)
-- [ ] Statsig editor (gates are at
-      `~/Developer/BlueskyOnCrack/src/lib/statsig/gates.ts`)
 
 ## Development Resources
 
