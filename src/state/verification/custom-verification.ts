@@ -119,23 +119,31 @@ async function getTrustedConstellationVerifications({
   if (!trusted.size) return []
   const linkedRecords = new Map<string, ConstellationLink>()
   const trustedList = Array.from(trusted)
+  const batchSize = 50
 
-  for (const trustedDid of trustedList) {
-    const links = constellationLinks({
-      instance,
-      params: {
-        target: did,
-        collection: 'app.bsky.graph.verification',
-        path: '.subject',
-        did: trustedDid,
-      },
-    })
-
-    for await (const link of links) {
-      if (link.did !== trustedDid) continue
-      linkedRecords.set(`${link.did}:${link.collection}:${link.rkey}`, link)
-    }
+  const batches: string[][] = []
+  for (let i = 0; i < trustedList.length; i += batchSize) {
+    batches.push(trustedList.slice(i, i + batchSize))
   }
+
+  await Promise.all(
+    batches.map(async batch => {
+      const links = constellationLinks({
+        instance,
+        params: {
+          target: did,
+          collection: 'app.bsky.graph.verification',
+          path: '.subject',
+          from_dids: batch,
+        },
+      })
+
+      for await (const link of links) {
+        if (!trusted.has(link.did)) continue
+        linkedRecords.set(`${link.did}:${link.collection}:${link.rkey}`, link)
+      }
+    }),
+  )
 
   return Array.from(linkedRecords.values())
 }
