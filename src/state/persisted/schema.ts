@@ -131,6 +131,19 @@ const schema = z.object({
       hijackHideLabels: z.boolean().optional(),
       hideSuggestedAccounts: z.boolean().optional(),
       alterEgoUri: z.string().optional(),
+      alterEgoByDid: z.record(z.string()).optional(),
+      alterEgoRecords: z
+        .record(
+          z.object({
+            uri: z.string(),
+            avatar: z.string().optional(),
+            banner: z.string().optional(),
+            handle: z.string().optional(),
+            description: z.string().optional(),
+            displayName: z.string().optional(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
   hasCheckedForStarterPack: z.boolean().optional(),
@@ -190,6 +203,8 @@ export const defaults: Schema = {
     hijackHideLabels: false,
     hideSuggestedAccounts: false,
     alterEgoUri: undefined,
+    alterEgoByDid: {},
+    alterEgoRecords: {},
   },
   hasCheckedForStarterPack: false,
   subtitlesEnabled: true,

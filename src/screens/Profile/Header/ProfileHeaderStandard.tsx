@@ -26,6 +26,7 @@ import {ProfileMenu} from '#/view/com/profile/ProfileMenu'
 import {atoms as a, platform, useBreakpoints, useTheme} from '#/alf'
 import {SubscribeProfileButton} from '#/components/activity-notifications/SubscribeProfileButton'
 import {Button, ButtonIcon, ButtonText} from '#/components/Button'
+import {AgField} from '#/components/crack/AgField'
 import {DebugFieldDisplay} from '#/components/DebugFieldDisplay'
 import {useDialogControl} from '#/components/Dialog'
 import {MessageProfileButton} from '#/components/dms/MessageProfileButton'
@@ -126,42 +127,76 @@ let ProfileHeaderStandard = ({
           <View
             style={[a.flex_col, a.gap_xs, a.pb_sm, live ? a.pt_sm : a.pt_2xs]}>
             <View style={[a.flex_row, a.align_center, a.gap_xs, a.flex_1]}>
-              <Text
-                emoji
-                testID="profileHeaderDisplayName"
-                style={[
-                  t.atoms.text,
-                  gtMobile ? a.text_4xl : a.text_3xl,
-                  a.self_start,
-                  a.font_bold,
-                  a.leading_tight,
-                ]}>
-                {sanitizeDisplayName(
-                  profile.displayName || sanitizeHandle(profile.handle),
-                  moderation.ui('displayName'),
+              <AgField
+                field="displayName"
+                value={profile.displayName}
+                did={profile.did}>
+                {displayNameValue => (
+                  <AgField
+                    field="handle"
+                    value={profile.handle}
+                    did={profile.did}>
+                    {handleValue => (
+                      <Text
+                        emoji
+                        testID="profileHeaderDisplayName"
+                        style={[
+                          t.atoms.text,
+                          gtMobile ? a.text_4xl : a.text_3xl,
+                          a.self_start,
+                          a.font_bold,
+                          a.leading_tight,
+                        ]}>
+                        {sanitizeDisplayName(
+                          displayNameValue || sanitizeHandle(handleValue),
+                          moderation.ui('displayName'),
+                        )}
+                        <View
+                          style={[a.pl_xs, {marginTop: platform({ios: 2})}]}>
+                          <VerificationCheckButton
+                            profile={profile}
+                            size="lg"
+                          />
+                        </View>
+                      </Text>
+                    )}
+                  </AgField>
                 )}
-                <View style={[a.pl_xs, {marginTop: platform({ios: 2})}]}>
-                  <VerificationCheckButton profile={profile} size="lg" />
-                </View>
-              </Text>
+              </AgField>
             </View>
             <ProfileHeaderHandle profile={profile} />
           </View>
           {!isPlaceholderProfile && !isBlockedUser && (
             <View style={a.gap_md}>
               <ProfileHeaderMetrics profile={profile} />
-              {descriptionRT && !moderation.ui('profileView').blur ? (
-                <View pointerEvents="auto">
-                  <RichText
-                    testID="profileHeaderDescription"
-                    style={[a.text_md]}
-                    numberOfLines={15}
-                    value={descriptionRT}
-                    enableTags
-                    authorHandle={profile.handle}
-                  />
-                </View>
-              ) : undefined}
+              <AgField
+                field="description"
+                value={profile.description ?? ''}
+                did={profile.did}>
+                {alterDescription => {
+                  const description =
+                    alterDescription === profile.description && descriptionRT
+                      ? descriptionRT
+                      : alterDescription
+                        ? new RichTextAPI({text: alterDescription})
+                        : null
+                  if (!description || moderation.ui('profileView').blur) {
+                    return null
+                  }
+                  return (
+                    <View pointerEvents="auto">
+                      <RichText
+                        testID="profileHeaderDescription"
+                        style={[a.text_md]}
+                        numberOfLines={15}
+                        value={description}
+                        enableTags
+                        authorHandle={profile.handle}
+                      />
+                    </View>
+                  )
+                }}
+              </AgField>
 
               {!isMe &&
                 !isBlockedUser &&

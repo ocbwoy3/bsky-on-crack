@@ -21,6 +21,7 @@ import {type NavigationProp} from '#/lib/routes/types'
 import {logger} from '#/logger'
 import {isIOS} from '#/platform/detection'
 import {type Shadow} from '#/state/cache/types'
+import {useActiveAlterEgo} from '#/state/crack/alter-ego'
 import {useLightboxControls} from '#/state/lightbox'
 import {useSession} from '#/state/session'
 import {LoadingPlaceholder} from '#/view/com/util/LoadingPlaceholder'
@@ -28,6 +29,7 @@ import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {UserBanner} from '#/view/com/util/UserBanner'
 import {atoms as a, platform, useTheme} from '#/alf'
 import {Button} from '#/components/Button'
+import {AgField} from '#/components/crack/AgField'
 import {useDialogControl} from '#/components/Dialog'
 import {ArrowLeft_Stroke2_Corner0_Rounded as ArrowLeftIcon} from '#/components/icons/Arrow'
 import {EditLiveDialog} from '#/components/live/EditLiveDialog'
@@ -113,6 +115,7 @@ let ProfileHeaderShell = ({
   )
 
   const live = useActorStatus(profile)
+  const activeAlter = useActiveAlterEgo(profile.did)
 
   useEffect(() => {
     if (live.isActive) {
@@ -135,7 +138,7 @@ let ProfileHeaderShell = ({
       liveStatusControl.open()
     } else {
       const modui = moderation.ui('avatar')
-      const avatar = profile.avatar
+      const avatar = activeAlter?.avatar ?? profile.avatar
       if (avatar && !(modui.blur && modui.noOverride)) {
         runOnUI(() => {
           'worklet'
@@ -145,6 +148,7 @@ let ProfileHeaderShell = ({
       }
     }
   }, [
+    activeAlter?.avatar,
     profile,
     moderation,
     _openLightbox,
@@ -156,7 +160,7 @@ let ProfileHeaderShell = ({
 
   const onPressBanner = useCallback(() => {
     const modui = moderation.ui('banner')
-    const banner = profile.banner
+    const banner = activeAlter?.banner ?? profile.banner
     if (banner && !(modui.blur && modui.noOverride)) {
       runOnUI(() => {
         'worklet'
@@ -164,7 +168,13 @@ let ProfileHeaderShell = ({
         runOnJS(_openLightbox)(banner, rect, 'image')
       })()
     }
-  }, [profile.banner, moderation, _openLightbox, bannerRef])
+  }, [
+    activeAlter?.banner,
+    profile.banner,
+    moderation,
+    _openLightbox,
+    bannerRef,
+  ])
 
   return (
     <View style={t.atoms.bg} pointerEvents={isIOS ? 'auto' : 'box-none'}>
@@ -224,11 +234,15 @@ let ProfileHeaderShell = ({
               style={{borderRadius: 0}}
             />
           ) : (
-            <UserBanner
-              type={profile.associated?.labeler ? 'labeler' : 'default'}
-              banner={profile.banner}
-              moderation={moderation.ui('banner')}
-            />
+            <AgField field="banner" value={profile.banner} did={profile.did}>
+              {banner => (
+                <UserBanner
+                  type={profile.associated?.labeler ? 'labeler' : 'default'}
+                  banner={banner}
+                  moderation={moderation.ui('banner')}
+                />
+              )}
+            </AgField>
           )}
         </GrowableBanner>
       </View>
@@ -260,38 +274,49 @@ let ProfileHeaderShell = ({
         ))}
 
       <GrowableAvatar style={[a.absolute, {top: 104, left: 10}]}>
-        <Pressable
-          testID="profileHeaderAviButton"
-          onPress={onPressAvi}
-          accessibilityRole="image"
-          accessibilityLabel={_(msg`View ${profile.handle}'s avatar`)}
-          accessibilityHint="">
-          <View
-            style={[
-              t.atoms.bg,
-              a.rounded_full,
-              {
-                width: 94,
-                height: 94,
-                borderWidth: live.isActive ? 3 : 2,
-                borderColor: live.isActive
-                  ? t.palette.negative_500
-                  : t.atoms.bg.backgroundColor,
-              },
-              profile.associated?.labeler && a.rounded_md,
-            ]}>
-            <Animated.View ref={aviRef} collapsable={false}>
-              <UserAvatar
-                type={profile.associated?.labeler ? 'labeler' : 'user'}
-                size={live.isActive ? 88 : 90}
-                avatar={profile.avatar}
-                moderation={moderation.ui('avatar')}
-                noBorder
-              />
-              {live.isActive && <LiveIndicator size="large" />}
-            </Animated.View>
-          </View>
-        </Pressable>
+        <AgField field="handle" value={profile.handle} did={profile.did}>
+          {handleValue => (
+            <Pressable
+              testID="profileHeaderAviButton"
+              onPress={onPressAvi}
+              accessibilityRole="image"
+              accessibilityLabel={_(msg`View ${handleValue}'s avatar`)}
+              accessibilityHint="">
+              <View
+                style={[
+                  t.atoms.bg,
+                  a.rounded_full,
+                  {
+                    width: 94,
+                    height: 94,
+                    borderWidth: live.isActive ? 3 : 2,
+                    borderColor: live.isActive
+                      ? t.palette.negative_500
+                      : t.atoms.bg.backgroundColor,
+                  },
+                  profile.associated?.labeler && a.rounded_md,
+                ]}>
+                <Animated.View ref={aviRef} collapsable={false}>
+                  <AgField
+                    field="avatar"
+                    value={profile.avatar}
+                    did={profile.did}>
+                    {avatar => (
+                      <UserAvatar
+                        type={profile.associated?.labeler ? 'labeler' : 'user'}
+                        size={live.isActive ? 88 : 90}
+                        avatar={avatar}
+                        moderation={moderation.ui('avatar')}
+                        noBorder
+                      />
+                    )}
+                  </AgField>
+                  {live.isActive && <LiveIndicator size="large" />}
+                </Animated.View>
+              </View>
+            </Pressable>
+          )}
+        </AgField>
       </GrowableAvatar>
 
       {live.isActive &&

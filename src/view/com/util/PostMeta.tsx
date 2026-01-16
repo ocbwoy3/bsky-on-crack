@@ -16,6 +16,7 @@ import {isAndroid} from '#/platform/detection'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {precacheProfile} from '#/state/queries/profile'
 import {atoms as a, platform, useTheme, web} from '#/alf'
+import {AgField} from '#/components/crack/AgField'
 import {WebOnlyInlineLinkText} from '#/components/Link'
 import {ProfileHoverCard} from '#/components/ProfileHoverCard'
 import {Text} from '#/components/Typography'
@@ -83,28 +84,32 @@ let PostMeta = (opts: PostMetaOpts): React.ReactNode => {
       <View style={[a.flex_row, a.align_end, a.flex_shrink]}>
         <ProfileHoverCard did={author.did}>
           <View style={[a.flex_row, a.align_end, a.flex_shrink]}>
-            <WebOnlyInlineLinkText
-              emoji
-              numberOfLines={1}
-              to={profileLink}
-              label={_(msg`View profile`)}
-              disableMismatchWarning
-              onPress={onBeforePressAuthor}
-              style={[
-                a.text_md,
-                a.font_semi_bold,
-                t.atoms.text,
-                a.leading_tight,
-                a.flex_shrink_0,
-                {maxWidth: '70%'},
-              ]}>
-              {forceLTR(
-                sanitizeDisplayName(
-                  displayName,
-                  opts.moderation?.ui('displayName'),
-                ),
+            <AgField field="displayName" value={displayName} did={author.did}>
+              {alterDisplayName => (
+                <WebOnlyInlineLinkText
+                  emoji
+                  numberOfLines={1}
+                  to={profileLink}
+                  label={_(msg`View profile`)}
+                  disableMismatchWarning
+                  onPress={onBeforePressAuthor}
+                  style={[
+                    a.text_md,
+                    a.font_semi_bold,
+                    t.atoms.text,
+                    a.leading_tight,
+                    a.flex_shrink_0,
+                    {maxWidth: '70%'},
+                  ]}>
+                  {forceLTR(
+                    sanitizeDisplayName(
+                      alterDisplayName,
+                      opts.moderation?.ui('displayName'),
+                    ),
+                  )}
+                </WebOnlyInlineLinkText>
               )}
-            </WebOnlyInlineLinkText>
+            </AgField>
             {verification.showBadge && (
               <View
                 style={[
@@ -120,22 +125,26 @@ let PostMeta = (opts: PostMetaOpts): React.ReactNode => {
                 />
               </View>
             )}
-            <WebOnlyInlineLinkText
-              emoji
-              numberOfLines={1}
-              to={profileLink}
-              label={_(msg`View profile`)}
-              disableMismatchWarning
-              disableUnderline
-              onPress={onBeforePressAuthor}
-              style={[
-                a.text_md,
-                t.atoms.text_contrast_medium,
-                a.leading_tight,
-                {flexShrink: 10},
-              ]}>
-              {NON_BREAKING_SPACE + sanitizeHandle(handle, '@')}
-            </WebOnlyInlineLinkText>
+            <AgField field="handle" value={handle} did={author.did}>
+              {alterHandle => (
+                <WebOnlyInlineLinkText
+                  emoji
+                  numberOfLines={1}
+                  to={profileLink}
+                  label={_(msg`View profile`)}
+                  disableMismatchWarning
+                  disableUnderline
+                  onPress={onBeforePressAuthor}
+                  style={[
+                    a.text_md,
+                    t.atoms.text_contrast_medium,
+                    a.leading_tight,
+                    {flexShrink: 10},
+                  ]}>
+                  {NON_BREAKING_SPACE + sanitizeHandle(alterHandle, '@')}
+                </WebOnlyInlineLinkText>
+              )}
+            </AgField>
           </View>
         </ProfileHoverCard>
 

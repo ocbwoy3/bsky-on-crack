@@ -1,0 +1,375 @@
+import {useEffect, useMemo, useState} from 'react'
+import {View} from 'react-native'
+import {msg, Trans} from '@lingui/macro'
+import {useLingui} from '@lingui/react'
+
+import {uploadBlob} from '#/lib/api'
+import {
+  ALTER_EGO_COLLECTION,
+  type AlterEgoRecord,
+  parseAlterEgoUri,
+  validateAlterEgoRecord,
+} from '#/lib/crack/alter-ego'
+import {compressIfNeeded} from '#/lib/media/manip'
+import {type PickerImage} from '#/lib/media/picker.shared'
+import {cleanError} from '#/lib/strings/errors'
+import {logger} from '#/logger'
+import {
+  fetchAlterEgoProfile,
+  resolveAlterEgoBlobRefToUrl,
+} from '#/state/crack/alter-ego'
+import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
+import {useAgent, useSession} from '#/state/session'
+import * as Toast from '#/view/com/util/Toast'
+import {EditableUserAvatar} from '#/view/com/util/UserAvatar'
+import {UserBanner} from '#/view/com/util/UserBanner'
+import {atoms as a, useTheme, web} from '#/alf'
+import {Button, ButtonText} from '#/components/Button'
+import * as Dialog from '#/components/Dialog'
+import * as TextField from '#/components/forms/TextField'
+import {Text} from '#/components/Typography'
+
+const MAX_IMAGE_SIZE = 1024 * 1024
+const MAX_HANDLE_LENGTH = 64
+const MAX_DESCRIPTION_LENGTH = 3000
+const MAX_DISPLAY_NAME_LENGTH = 64
+
+export function AlterEgoEditorDialog({
+  control,
+  uri,
+  onDismiss,
+}: {
+  control: Dialog.DialogOuterProps['control']
+  uri: string | null
+  onDismiss?: () => void
+}) {
+  const t = useTheme()
+  const {_} = useLingui()
+  const agent = useAgent()
+  const {currentAccount} = useSession()
+  const settings = useCrackSettings()
+  const {update} = useCrackSettingsApi()
+  const [record, setRecord] = useState<AlterEgoRecord | null>(null)
+  const [displayName, setDisplayName] = useState('')
+  const [handle, setHandle] = useState('')
+  const [description, setDescription] = useState('')
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+  const [newAvatar, setNewAvatar] = useState<PickerImage | null | undefined>()
+  const [newBanner, setNewBanner] = useState<PickerImage | null | undefined>()
+  const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const parsed = useMemo(() => (uri ? parseAlterEgoUri(uri) : null), [uri])
+
+  useEffect(() => {
+    const loadRecord = async () => {
+      if (!uri || !parsed) {
+        setRecord(null)
+        setDisplayName('')
+        setHandle('')
+        setDescription('')
+        setAvatarPreview(null)
+        setBannerPreview(null)
+        setNewAvatar(undefined)
+        setNewBanner(undefined)
+        setError(null)
+        return
+      }
+      setError(null)
+      try {
+        const res = await agent.com.atproto.repo.getRecord({
+          repo: parsed.repo,
+          collection: ALTER_EGO_COLLECTION,
+          rkey: parsed.rkey,
+        })
+        const value = res.data.value
+        if (!validateAlterEgoRecord(value)) {
+          throw new Error(_(msg`Alter ego record failed client validation.`))
+        }
+        setRecord(value)
+        setDisplayName(value.displayName ?? '')
+        setHandle(value.handle ?? '')
+        setDescription(value.description ?? '')
+        try {
+          setAvatarPreview(
+            resolveAlterEgoBlobRefToUrl({
+              agent,
+              did: parsed.repo,
+              blob: value.avatar,
+            }) ?? null,
+          )
+        } catch (avatarError) {
+          logger.error('Failed to resolve alter ego avatar', {
+            error: avatarError,
+          })
+          setAvatarPreview(null)
+        }
+        try {
+          setBannerPreview(
+            resolveAlterEgoBlobRefToUrl({
+              agent,
+              did: parsed.repo,
+              blob: value.banner,
+            }) ?? null,
+          )
+        } catch (bannerError) {
+          logger.error('Failed to resolve alter ego banner', {
+            error: bannerError,
+          })
+          setBannerPreview(null)
+        }
+      } catch (loadError: any) {
+        logger.error('Failed to load alter ego record', {error: loadError})
+        setError(loadError?.message ?? _(msg`Failed to load alter ego record.`))
+      }
+    }
+
+    loadRecord()
+  }, [agent, parsed, uri, _])
+
+  const onSelectNewAvatar = async (img: PickerImage | null) => {
+    setError(null)
+    if (!img) {
+      setNewAvatar(null)
+      setAvatarPreview(null)
+      return
+    }
+    if (img.size > MAX_IMAGE_SIZE) {
+      setError(_(msg`Avatar must be 1MB or less.`))
+      return
+    }
+    try {
+      const compressed = await compressIfNeeded(img, MAX_IMAGE_SIZE)
+      setNewAvatar(compressed)
+      setAvatarPreview(compressed.path)
+    } catch (e: any) {
+      setError(cleanError(e))
+    }
+  }
+
+  const onSelectNewBanner = async (img: PickerImage | null) => {
+    setError(null)
+    if (!img) {
+      setNewBanner(null)
+      setBannerPreview(null)
+      return
+    }
+    if (img.size > MAX_IMAGE_SIZE) {
+      setError(_(msg`Banner must be 1MB or less.`))
+      return
+    }
+    try {
+      const compressed = await compressIfNeeded(img, MAX_IMAGE_SIZE)
+      setNewBanner(compressed)
+      setBannerPreview(compressed.path)
+    } catch (e: any) {
+      setError(cleanError(e))
+    }
+  }
+
+  const onSave = async () => {
+    if (!uri || !parsed || !record) {
+      setError(_(msg`Select a valid alter ego record.`))
+      return
+    }
+    if (!currentAccount || currentAccount.did !== parsed.repo) {
+      setError(_(msg`You can only edit your own alter ego records.`))
+      return
+    }
+    const nextDisplayName = displayName.trim()
+    const nextHandle = handle.trim()
+    const nextDescription = description.trim()
+
+    if (nextHandle.length > MAX_HANDLE_LENGTH) {
+      setError(_(msg`Handle must be 64 characters or less.`))
+      return
+    }
+    if (nextDescription.length > MAX_DESCRIPTION_LENGTH) {
+      setError(_(msg`Description must be 3000 characters or less.`))
+      return
+    }
+    if (nextDisplayName.length > MAX_DISPLAY_NAME_LENGTH) {
+      setError(_(msg`Display name must be 64 characters or less.`))
+      return
+    }
+
+    setIsSaving(true)
+    setError(null)
+    try {
+      const nextRecord: AlterEgoRecord = {
+        ...record,
+        displayName: nextDisplayName || undefined,
+        handle: nextHandle || undefined,
+        description: nextDescription || undefined,
+      }
+
+      if (newAvatar) {
+        const avatarRes = await uploadBlob(
+          agent,
+          newAvatar.path,
+          newAvatar.mime,
+        )
+        nextRecord.avatar = avatarRes.data.blob
+      } else if (newAvatar === null) {
+        nextRecord.avatar = undefined
+      }
+
+      if (newBanner) {
+        const bannerRes = await uploadBlob(
+          agent,
+          newBanner.path,
+          newBanner.mime,
+        )
+        nextRecord.banner = bannerRes.data.blob
+      } else if (newBanner === null) {
+        nextRecord.banner = undefined
+      }
+
+      if (!validateAlterEgoRecord(nextRecord)) {
+        throw new Error(_(msg`Alter ego record failed client validation.`))
+      }
+
+      await agent.com.atproto.repo.putRecord({
+        repo: parsed.repo,
+        collection: ALTER_EGO_COLLECTION,
+        rkey: parsed.rkey,
+        record: nextRecord,
+      })
+
+      const updatedOverlay = await fetchAlterEgoProfile({agent, uri})
+      update({
+        alterEgoRecords: {
+          ...(settings.alterEgoRecords ?? {}),
+          [updatedOverlay.uri]: updatedOverlay,
+        },
+      })
+
+      control.close(() => {
+        Toast.show(_(msg`Alter ego saved.`))
+        onDismiss?.()
+      })
+    } catch (saveError: any) {
+      logger.error('Failed to save alter ego', {error: saveError})
+      setError(saveError?.message ?? _(msg`Failed to save alter ego.`))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <Dialog.Outer control={control} nativeOptions={{preventExpansion: true}}>
+      <Dialog.Handle />
+      <Dialog.ScrollableInner label="" style={web({maxWidth: 520})}>
+        <View style={[a.gap_lg]}>
+          <Text style={[a.text_2xl, a.font_bold]}>
+            <Trans>Edit alter ego</Trans>
+          </Text>
+          {uri && (
+            <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
+              <Trans>
+                Editing <Text style={[a.font_semi_bold]}>{uri}</Text>
+              </Trans>
+            </Text>
+          )}
+
+          <View style={[a.gap_md]}>
+            <View style={[a.gap_sm]}>
+              <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
+                <Trans>Avatar</Trans>
+              </Text>
+              <EditableUserAvatar
+                size={96}
+                avatar={avatarPreview}
+                onSelectNewAvatar={onSelectNewAvatar}
+              />
+            </View>
+
+            <View style={[a.gap_sm]}>
+              <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
+                <Trans>Banner</Trans>
+              </Text>
+              <UserBanner
+                banner={bannerPreview}
+                onSelectNewBanner={onSelectNewBanner}
+              />
+            </View>
+
+            <View style={[a.gap_sm]}>
+              <TextField.LabelText>
+                <Trans>Display name</Trans>
+              </TextField.LabelText>
+              <TextField.Root>
+                <TextField.Input
+                  label={_(msg`Display name`)}
+                  key={`${uri ?? 'alter-ego'}-displayName`}
+                  defaultValue={displayName}
+                  onChangeText={setDisplayName}
+                />
+              </TextField.Root>
+            </View>
+
+            <View style={[a.gap_sm]}>
+              <TextField.LabelText>
+                <Trans>Handle</Trans>
+              </TextField.LabelText>
+              <TextField.Root>
+                <TextField.Input
+                  label={_(msg`Handle`)}
+                  key={`${uri ?? 'alter-ego'}-handle`}
+                  defaultValue={handle}
+                  onChangeText={setHandle}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </TextField.Root>
+            </View>
+
+            <View style={[a.gap_sm]}>
+              <TextField.LabelText>
+                <Trans>Description</Trans>
+              </TextField.LabelText>
+              <TextField.Root>
+                <TextField.Input
+                  label={_(msg`Description`)}
+                  key={`${uri ?? 'alter-ego'}-description`}
+                  defaultValue={description}
+                  onChangeText={setDescription}
+                  multiline
+                />
+              </TextField.Root>
+            </View>
+          </View>
+
+          {error && (
+            <Text style={[a.text_sm, {color: t.palette.negative_400}]}>
+              {error}
+            </Text>
+          )}
+
+          <View style={[a.flex_row, a.justify_end, a.gap_sm]}>
+            <Button
+              variant="solid"
+              color="secondary"
+              size="small"
+              label={_(msg`Cancel`)}
+              onPress={() => control.close(() => onDismiss?.())}>
+              <ButtonText>{_(msg`Cancel`)}</ButtonText>
+            </Button>
+            <Button
+              variant="solid"
+              color="primary"
+              size="small"
+              label={_(msg`Save`)}
+              disabled={isSaving}
+              onPress={onSave}>
+              <ButtonText>
+                {isSaving ? _(msg`Saving...`) : _(msg`Save`)}
+              </ButtonText>
+            </Button>
+          </View>
+        </View>
+      </Dialog.ScrollableInner>
+    </Dialog.Outer>
+  )
+}

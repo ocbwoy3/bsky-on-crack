@@ -39,6 +39,7 @@ import {
   type ButtonProps,
   ButtonText,
 } from '#/components/Button'
+import {AgField} from '#/components/crack/AgField'
 import {Check_Stroke2_Corner0_Rounded as Check} from '#/components/icons/Check'
 import {PlusLarge_Stroke2_Corner0_Rounded as Plus} from '#/components/icons/Plus'
 import {Link as InternalLink, type LinkProps} from '#/components/Link'
@@ -137,20 +138,28 @@ export function Link({
 } & Omit<LinkProps, 'to' | 'label'>) {
   const {_} = useLingui()
   return (
-    <InternalLink
-      label={_(
-        msg`View ${
-          profile.displayName || sanitizeHandle(profile.handle)
-        }'s profile`,
+    <AgField field="displayName" value={profile.displayName} did={profile.did}>
+      {displayNameValue => (
+        <AgField field="handle" value={profile.handle} did={profile.did}>
+          {handleValue => (
+            <InternalLink
+              label={_(
+                msg`View ${
+                  displayNameValue || sanitizeHandle(handleValue)
+                }'s profile`,
+              )}
+              to={{
+                screen: 'Profile',
+                params: {name: profile.did},
+              }}
+              style={[a.flex_col, style]}
+              {...rest}>
+              {children}
+            </InternalLink>
+          )}
+        </AgField>
       )}
-      to={{
-        screen: 'Profile',
-        params: {name: profile.did},
-      }}
-      style={[a.flex_col, style]}
-      {...rest}>
-      {children}
-    </InternalLink>
+    </AgField>
   )
 }
 
@@ -174,13 +183,17 @@ export function Avatar({
   const {isActive: live} = useActorStatus(profile)
 
   return disabledPreview ? (
-    <UserAvatar
-      size={size}
-      avatar={profile.avatar}
-      type={profile.associated?.labeler ? 'labeler' : 'user'}
-      moderation={moderation.ui('avatar')}
-      live={liveOverride ?? live}
-    />
+    <AgField field="avatar" value={profile.avatar} did={profile.did}>
+      {avatar => (
+        <UserAvatar
+          size={size}
+          avatar={avatar}
+          type={profile.associated?.labeler ? 'labeler' : 'user'}
+          moderation={moderation.ui('avatar')}
+          live={liveOverride ?? live}
+        />
+      )}
+    </AgField>
   ) : (
     <PreviewableUserAvatar
       size={size}
@@ -241,47 +254,62 @@ function InlineNameAndHandle({
   const t = useTheme()
   const verification = useSimpleVerificationState({profile})
   const moderation = moderateProfile(profile, moderationOpts)
-  const name = sanitizeDisplayName(
-    profile.displayName || sanitizeHandle(profile.handle),
-    moderation.ui('displayName'),
-  )
-  const handle = sanitizeHandle(profile.handle, '@')
   return (
     <View style={[a.flex_row, a.align_end, a.flex_shrink]}>
-      <Text
-        emoji
-        style={[
-          a.font_semi_bold,
-          a.leading_tight,
-          a.flex_shrink_0,
-          {maxWidth: '70%'},
-        ]}
-        numberOfLines={1}>
-        {forceLTR(name)}
-      </Text>
-      {verification.showBadge && (
-        <View
-          style={[
-            a.pl_2xs,
-            a.self_center,
-            {marginTop: platform({default: 0, android: -1})},
-          ]}>
-          <VerificationCheck
-            width={platform({android: 13, default: 12})}
-            verifier={verification.role === 'verifier'}
-          />
-        </View>
-      )}
-      <Text
-        emoji
-        style={[
-          a.leading_tight,
-          t.atoms.text_contrast_medium,
-          {flexShrink: 10},
-        ]}
-        numberOfLines={1}>
-        {NON_BREAKING_SPACE + handle}
-      </Text>
+      <AgField
+        field="displayName"
+        value={profile.displayName}
+        did={profile.did}>
+        {displayNameValue => (
+          <AgField field="handle" value={profile.handle} did={profile.did}>
+            {handleValue => {
+              const name = sanitizeDisplayName(
+                displayNameValue || sanitizeHandle(handleValue),
+                moderation.ui('displayName'),
+              )
+              const handle = sanitizeHandle(handleValue, '@')
+              return (
+                <>
+                  <Text
+                    emoji
+                    style={[
+                      a.font_semi_bold,
+                      a.leading_tight,
+                      a.flex_shrink_0,
+                      {maxWidth: '70%'},
+                    ]}
+                    numberOfLines={1}>
+                    {forceLTR(name)}
+                  </Text>
+                  {verification.showBadge && (
+                    <View
+                      style={[
+                        a.pl_2xs,
+                        a.self_center,
+                        {marginTop: platform({default: 0, android: -1})},
+                      ]}>
+                      <VerificationCheck
+                        width={platform({android: 13, default: 12})}
+                        verifier={verification.role === 'verifier'}
+                      />
+                    </View>
+                  )}
+                  <Text
+                    emoji
+                    style={[
+                      a.leading_tight,
+                      t.atoms.text_contrast_medium,
+                      {flexShrink: 10},
+                    ]}
+                    numberOfLines={1}>
+                    {NON_BREAKING_SPACE + handle}
+                  </Text>
+                </>
+              )
+            }}
+          </AgField>
+        )}
+      </AgField>
     </View>
   )
 }
@@ -298,34 +326,49 @@ export function Name({
   textStyle?: StyleProp<TextStyle>
 }) {
   const moderation = moderateProfile(profile, moderationOpts)
-  const name = sanitizeDisplayName(
-    profile.displayName || sanitizeHandle(profile.handle),
-    moderation.ui('displayName'),
-  )
   const verification = useSimpleVerificationState({profile})
   return (
     <View style={[a.flex_row, a.align_center, a.max_w_full, style]}>
-      <Text
-        emoji
-        style={[
-          a.text_md,
-          a.font_semi_bold,
-          a.leading_snug,
-          a.self_start,
-          a.flex_shrink,
-          textStyle,
-        ]}
-        numberOfLines={1}>
-        {name}
-      </Text>
-      {verification.showBadge && (
-        <View style={[a.pl_xs]}>
-          <VerificationCheck
-            width={14}
-            verifier={verification.role === 'verifier'}
-          />
-        </View>
-      )}
+      <AgField
+        field="displayName"
+        value={profile.displayName}
+        did={profile.did}>
+        {displayNameValue => (
+          <AgField field="handle" value={profile.handle} did={profile.did}>
+            {handleValue => {
+              const name = sanitizeDisplayName(
+                displayNameValue || sanitizeHandle(handleValue),
+                moderation.ui('displayName'),
+              )
+              return (
+                <>
+                  <Text
+                    emoji
+                    style={[
+                      a.text_md,
+                      a.font_semi_bold,
+                      a.leading_snug,
+                      a.self_start,
+                      a.flex_shrink,
+                      textStyle,
+                    ]}
+                    numberOfLines={1}>
+                    {name}
+                  </Text>
+                  {verification.showBadge && (
+                    <View style={[a.pl_xs]}>
+                      <VerificationCheck
+                        width={14}
+                        verifier={verification.role === 'verifier'}
+                      />
+                    </View>
+                  )}
+                </>
+              )
+            }}
+          </AgField>
+        )}
+      </AgField>
     </View>
   )
 }
@@ -338,15 +381,17 @@ export function Handle({
   textStyle?: StyleProp<TextStyle>
 }) {
   const t = useTheme()
-  const handle = sanitizeHandle(profile.handle, '@')
-
   return (
-    <Text
-      emoji
-      style={[a.leading_snug, t.atoms.text_contrast_medium, textStyle]}
-      numberOfLines={1}>
-      {handle}
-    </Text>
+    <AgField field="handle" value={profile.handle} did={profile.did}>
+      {handleValue => (
+        <Text
+          emoji
+          style={[a.leading_snug, t.atoms.text_contrast_medium, textStyle]}
+          numberOfLines={1}>
+          {sanitizeHandle(handleValue, '@')}
+        </Text>
+      )}
+    </AgField>
   )
 }
 
@@ -409,9 +454,9 @@ export function Description({
   const profile = useProfileShadow(profileUnshadowed)
   const rt = useMemo(() => {
     if (!('description' in profile)) return
-    const rt = new RichTextApi({text: profile.description || ''})
-    rt.detectFacetsWithoutResolution()
-    return rt
+    const nextRt = new RichTextApi({text: profile.description || ''})
+    nextRt.detectFacetsWithoutResolution()
+    return nextRt
   }, [profile])
   if (!rt) return null
   if (

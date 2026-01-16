@@ -1,32 +1,16 @@
-import {useEffect, useMemo} from 'react'
 import {type BskyAgent} from '@atproto/api'
-import {useQuery} from '@tanstack/react-query'
 
 import {
   ALTER_EGO_COLLECTION,
   type AlterEgoProfileOverlay,
   type AlterEgoRecord,
-  applyAlterEgoProfile,
   parseAlterEgoUri,
   validateAlterEgoRecord,
 } from '#/lib/crack/alter-ego'
 import {logger} from '#/logger'
-import {useCrackSettings} from '#/state/preferences'
-import {useAgent, useSession} from '#/state/session'
-import type * as bsky from '#/types/bsky'
+import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
 
-const ALTER_EGO_QUERY_KEY = ['crack', 'alter-ego']
-let alterEgoOverlayCache: AlterEgoProfileOverlay | null = null
-
-export function getAlterEgoOverlayCache() {
-  return alterEgoOverlayCache
-}
-
-function setAlterEgoOverlayCache(overlay: AlterEgoProfileOverlay | null) {
-  alterEgoOverlayCache = overlay
-}
-
-function resolveBlobRefToUrl({
+export function resolveAlterEgoBlobRefToUrl({
   agent,
   did,
   blob,
@@ -75,13 +59,21 @@ export async function fetchAlterEgoProfile({
   let banner: string | undefined
 
   try {
-    avatar = resolveBlobRefToUrl({agent, did: repo, blob: record.avatar})
+    avatar = resolveAlterEgoBlobRefToUrl({
+      agent,
+      did: repo,
+      blob: record.avatar,
+    })
   } catch (error) {
     logger.error('Failed to resolve alter ego avatar', {error})
   }
 
   try {
-    banner = resolveBlobRefToUrl({agent, did: repo, blob: record.banner})
+    banner = resolveAlterEgoBlobRefToUrl({
+      agent,
+      did: repo,
+      blob: record.banner,
+    })
   } catch (error) {
     logger.error('Failed to resolve alter ego banner', {error})
   }
@@ -96,43 +88,23 @@ export async function fetchAlterEgoProfile({
   }
 }
 
-export function useAlterEgoOverlay() {
-  const agent = useAgent()
+export function useActiveAlterEgo(did: string) {
   const settings = useCrackSettings()
-  const uri = settings.alterEgoUri?.trim()
-  useEffect(() => {
-    if (!uri) {
-      setAlterEgoOverlayCache(null)
-    }
-  }, [uri])
-  return useQuery({
-    queryKey: [...ALTER_EGO_QUERY_KEY, uri],
-    enabled: Boolean(uri),
-    queryFn: async () => {
-      if (!uri) return undefined
-      return fetchAlterEgoProfile({agent, uri})
-    },
-    //@ts-expect-error
-    onSuccess: overlay => {
-      if (overlay) {
-        setAlterEgoOverlayCache(overlay)
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-  })
+  const activeUri = settings.alterEgoByDid?.[did]
+  return activeUri ? settings.alterEgoRecords?.[activeUri] : undefined
 }
 
-export function useAlterEgoProfile<
-  TProfile extends bsky.profile.AnyProfileView,
->(profile?: TProfile): TProfile | undefined {
-  const {currentAccount} = useSession()
-  const {data: overlay} = useAlterEgoOverlay()
-
-  return useMemo(() => {
-    if (!profile) return profile
-    if (!overlay || profile.did !== currentAccount?.did) {
-      return profile
+export function useSetActiveAlterEgo() {
+  const settings = useCrackSettings()
+  const {update} = useCrackSettingsApi()
+  return (did: string, uri: string | null) => {
+    const nextByDid = {...(settings.alterEgoByDid ?? {})}
+    if (uri) {
+      nextByDid[did] = uri
+      update({alterEgoByDid: nextByDid, alterEgoUri: uri})
+    } else {
+      delete nextByDid[did]
+      update({alterEgoByDid: nextByDid, alterEgoUri: undefined})
     }
-    return applyAlterEgoProfile(profile, overlay)
-  }, [profile, overlay, currentAccount?.did])
+  }
 }

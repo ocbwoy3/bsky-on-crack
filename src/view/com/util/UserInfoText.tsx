@@ -7,6 +7,7 @@ import {sanitizeHandle} from '#/lib/strings/handles'
 import {STALE} from '#/state/queries'
 import {useProfileQuery} from '#/state/queries/profile'
 import {atoms as a} from '#/alf'
+import {AgField} from '#/components/crack/AgField'
 import {InlineLinkText} from '#/components/Link'
 import {Text} from '#/components/Typography'
 import {LoadingPlaceholder} from './LoadingPlaceholder'
@@ -40,20 +41,48 @@ export function UserInfoText({
       </Text>
     )
   } else if (profile) {
-    const text = `${prefix || ''}${sanitizeDisplayName(
+    const fallbackText = sanitizeHandle(profile.handle)
+    const rawValue =
       typeof profile[attr] === 'string' && profile[attr]
         ? (profile[attr] as string)
-        : sanitizeHandle(profile.handle),
-    )}`
+        : fallbackText
+    const field =
+      attr === 'displayName'
+        ? 'displayName'
+        : attr === 'handle'
+          ? 'handle'
+          : attr === 'description'
+            ? 'description'
+            : undefined
+
+    const renderText = (value: string) => {
+      const text = `${prefix || ''}${sanitizeDisplayName(value)}`
+      return (
+        <InlineLinkText
+          emoji
+          label={text}
+          style={style}
+          numberOfLines={1}
+          to={makeProfileLink(profile)}>
+          {text}
+        </InlineLinkText>
+      )
+    }
+
+    if (!field) {
+      return renderText(rawValue)
+    }
+
     return (
       <InlineLinkText
-        label={text}
+        emoji
+        label={`${prefix || ''}${sanitizeDisplayName(rawValue)}`}
         style={style}
         numberOfLines={1}
         to={makeProfileLink(profile)}>
-        <Text emoji style={style}>
-          {text}
-        </Text>
+        <AgField field={field} value={rawValue} did={profile.did}>
+          {value => `${prefix || ''}${sanitizeDisplayName(value)}`}
+        </AgField>
       </InlineLinkText>
     )
   }
