@@ -19,7 +19,7 @@ import {AlterEgoEditorDialog} from '#/components/crack/AlterEgoEditorDialog'
 import * as Dialog from '#/components/Dialog'
 import * as TextField from '#/components/forms/TextField'
 import {Check_Stroke2_Corner0_Rounded as CheckIcon} from '#/components/icons/Check'
-import {Edit_Stroke2_Corner0_Rounded as EditIcon} from '#/components/icons/Edit'
+import {Pencil_Stroke2_Corner0_Rounded as EditIcon} from '#/components/icons/Pencil'
 import {Text} from '#/components/Typography'
 
 export function AlterEgoDialog({
