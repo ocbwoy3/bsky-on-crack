@@ -5,7 +5,7 @@ import {
   moderateProfile,
   type ModerationDecision,
   type ModerationOpts,
-  RichText as RichTextAPI,
+  type RichText as RichTextAPI,
 } from '@atproto/api'
 import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
@@ -30,6 +30,7 @@ import {AgField} from '#/components/crack/AgField'
 import {DebugFieldDisplay} from '#/components/DebugFieldDisplay'
 import {useDialogControl} from '#/components/Dialog'
 import {MessageProfileButton} from '#/components/dms/MessageProfileButton'
+import {useRichText} from '#/components/hooks/useRichText'
 import {PlusLarge_Stroke2_Corner0_Rounded as Plus} from '#/components/icons/Plus'
 import {
   KnownFollowers,
@@ -173,29 +174,15 @@ let ProfileHeaderStandard = ({
                 field="description"
                 value={profile.description ?? ''}
                 did={profile.did}>
-                {alterDescription => {
-                  const description =
-                    alterDescription === profile.description && descriptionRT
-                      ? descriptionRT
-                      : alterDescription
-                        ? new RichTextAPI({text: alterDescription})
-                        : null
-                  if (!description || moderation.ui('profileView').blur) {
-                    return null
-                  }
-                  return (
-                    <View pointerEvents="auto">
-                      <RichText
-                        testID="profileHeaderDescription"
-                        style={[a.text_md]}
-                        numberOfLines={15}
-                        value={description}
-                        enableTags
-                        authorHandle={profile.handle}
-                      />
-                    </View>
-                  )
-                }}
+                {alterDescription => (
+                  <AlterEgoDescription
+                    alterDescription={alterDescription}
+                    baseDescription={profile.description ?? ''}
+                    descriptionRT={descriptionRT}
+                    moderation={moderation}
+                    authorHandle={profile.handle}
+                  />
+                )}
               </AgField>
 
               {!isMe &&
@@ -233,6 +220,47 @@ let ProfileHeaderStandard = ({
         actorDid={profile.did}
       />
     </>
+  )
+}
+
+function AlterEgoDescription({
+  alterDescription,
+  baseDescription,
+  descriptionRT,
+  moderation,
+  authorHandle,
+}: {
+  alterDescription: string
+  baseDescription: string
+  descriptionRT: RichTextAPI | null
+  moderation: ModerationDecision
+  authorHandle: string
+}) {
+  const resolveAlterFacets = alterDescription !== baseDescription
+  const [alterDescriptionRT] = useRichText(
+    resolveAlterFacets ? alterDescription : '',
+  )
+  const description = resolveAlterFacets
+    ? alterDescription
+      ? alterDescriptionRT
+      : null
+    : descriptionRT
+
+  if (!description || moderation.ui('profileView').blur) {
+    return null
+  }
+
+  return (
+    <View pointerEvents="auto">
+      <RichText
+        testID="profileHeaderDescription"
+        style={[a.text_md]}
+        numberOfLines={15}
+        value={description}
+        enableTags
+        authorHandle={authorHandle}
+      />
+    </View>
   )
 }
 

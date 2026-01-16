@@ -130,6 +130,7 @@ const schema = z.object({
       uncapLabelerLimit: z.boolean().optional(),
       hijackHideLabels: z.boolean().optional(),
       hideSuggestedAccounts: z.boolean().optional(),
+      alterEgoEnabled: z.boolean().optional(),
       alterEgoUri: z.string().optional(),
       alterEgoByDid: z.record(z.string()).optional(),
       alterEgoRecords: z
@@ -203,6 +204,7 @@ export const defaults: Schema = {
     uncapLabelerLimit: false,
     hijackHideLabels: false,
     hideSuggestedAccounts: false,
+    alterEgoEnabled: true,
     alterEgoUri: undefined,
     alterEgoByDid: {},
     alterEgoRecords: {},

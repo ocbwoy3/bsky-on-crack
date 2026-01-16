@@ -317,7 +317,7 @@ function DialogInner({
               defaultValue={displayName}
               onChangeText={setDisplayName}
               label={_(msg`Display name`)}
-              placeholder={_(msg`e.g. Alice Lastname`)}
+              placeholder={_(msg`e.g. Kris Dreemurr`)}
               testID="editProfileDisplayNameInput"
             />
           </TextField.Root>

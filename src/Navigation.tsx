@@ -134,6 +134,7 @@ import {Wizard} from '#/screens/StarterPack/Wizard'
 import TopicScreen from '#/screens/Topic'
 import {VideoFeed} from '#/screens/VideoFeed'
 import {type Theme, useTheme} from '#/alf'
+import {CrackAlterEgoSettingsScreen} from '#/components/CrackComponents/CrackAlterEgoSettingsScreen'
 import {CrackSettingsScreen} from '#/components/CrackComponents/CrackSettingsScreen'
 import {CrackVerificationSettingsScreen} from '#/components/CrackComponents/CrackVerificationSettingsScreen'
 import {
@@ -220,6 +221,11 @@ function commonScreens(Stack: typeof Flat, unreadCountLabel?: string) {
         name="CrackSettings"
         getComponent={() => CrackSettingsScreen}
         options={{title: title(msg`Crack settings`), requireAuth: true}}
+      />
+      <Stack.Screen
+        name="CrackAlterEgoSettings"
+        getComponent={() => CrackAlterEgoSettingsScreen}
+        options={{title: title(msg`Alter ego`), requireAuth: true}}
       />
       <Stack.Screen
         name="CrackVerificationSettings"

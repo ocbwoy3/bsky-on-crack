@@ -26,6 +26,7 @@ import {cleanError} from '#/lib/strings/errors'
 import {isInvalidHandle} from '#/lib/strings/handles'
 import {colors, s} from '#/lib/styles'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {listenSoftReset} from '#/state/events'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useLabelerInfoQuery} from '#/state/queries/labeler'
@@ -201,7 +202,8 @@ function ProfileScreenLoaded({
   const starterPacksSectionRef = React.useRef<SectionRef>(null)
   const labelsSectionRef = React.useRef<SectionRef>(null)
 
-  useSetTitle(combinedDisplayName(profile))
+  const displayProfile = useAlterEgoProfileFields(profile)
+  useSetTitle(combinedDisplayName(displayProfile))
 
   const description = profile.description ?? ''
   const hasDescription = description !== ''
@@ -611,6 +613,8 @@ function useRichText(text: string): [RichTextAPI, boolean] {
     let ignore = false
     async function resolveRTFacets() {
       // new each time
+      // chatgpt
+      // eslint-disable-next-line @typescript-eslint/no-shadow
       const resolvedRT = new RichTextAPI({text})
       await resolvedRT.detectFacets(agent)
       if (!ignore) {

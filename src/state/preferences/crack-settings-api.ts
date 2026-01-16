@@ -11,6 +11,7 @@ export const crackSettingsDefaults: CrackSettings = {
   uncapLabelerLimit: false,
   hijackHideLabels: false,
   hideSuggestedAccounts: false,
+  alterEgoEnabled: true,
   alterEgoUri: undefined,
   alterEgoByDid: {},
   alterEgoRecords: {},
@@ -125,7 +126,7 @@ export const crackSettingsSections: CrackSettingsSection[] = [
       {
         type: 'toggle',
         key: 'uncapLabelerLimit',
-        label: 'Remote labeler limit',
+        label: 'Remove labeler limit',
         description: "Remove Bluesky's 20 labeler limit. Might break the app.",
       },
       {

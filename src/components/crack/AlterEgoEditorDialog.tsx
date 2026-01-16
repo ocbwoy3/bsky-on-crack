@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from 'react'
-import {View} from 'react-native'
-import {msg, Trans} from '@lingui/macro'
+import {useWindowDimensions, View} from 'react-native'
+import {msg, Plural, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 
 import {uploadBlob} from '#/lib/api'
@@ -13,6 +13,7 @@ import {
 import {compressIfNeeded} from '#/lib/media/manip'
 import {type PickerImage} from '#/lib/media/picker.shared'
 import {cleanError} from '#/lib/strings/errors'
+import {isOverMaxGraphemeCount} from '#/lib/strings/helpers'
 import {logger} from '#/logger'
 import {
   fetchAlterEgoProfile,
@@ -20,19 +21,30 @@ import {
 } from '#/state/crack/alter-ego'
 import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
 import {useAgent, useSession} from '#/state/session'
+import {ErrorMessage} from '#/view/com/util/error/ErrorMessage'
 import * as Toast from '#/view/com/util/Toast'
 import {EditableUserAvatar} from '#/view/com/util/UserAvatar'
 import {UserBanner} from '#/view/com/util/UserBanner'
 import {atoms as a, useTheme, web} from '#/alf'
-import {Button, ButtonText} from '#/components/Button'
+import {Button, ButtonIcon, ButtonText} from '#/components/Button'
 import * as Dialog from '#/components/Dialog'
 import * as TextField from '#/components/forms/TextField'
+import {Loader} from '#/components/Loader'
+import * as Prompt from '#/components/Prompt'
 import {Text} from '#/components/Typography'
 
 const MAX_IMAGE_SIZE = 1024 * 1024
 const MAX_HANDLE_LENGTH = 64
 const MAX_DESCRIPTION_LENGTH = 3000
 const MAX_DISPLAY_NAME_LENGTH = 64
+
+type InitialValues = {
+  displayName: string
+  handle: string
+  description: string
+  avatar: string | null
+  banner: string | null
+}
 
 export function AlterEgoEditorDialog({
   control,
@@ -43,9 +55,69 @@ export function AlterEgoEditorDialog({
   uri: string | null
   onDismiss?: () => void
 }) {
+  const {_} = useLingui()
+  const cancelControl = Dialog.useDialogControl()
+  const [dirty, setDirty] = useState(false)
+  const {height} = useWindowDimensions()
+
+  const onPressCancel = () => {
+    if (dirty) {
+      cancelControl.open()
+    } else {
+      control.close(() => onDismiss?.())
+    }
+  }
+
+  return (
+    <Dialog.Outer
+      control={control}
+      nativeOptions={{
+        preventDismiss: dirty,
+        minHeight: height,
+      }}
+      webOptions={{
+        onBackgroundPress: () => {
+          if (dirty) {
+            cancelControl.open()
+          } else {
+            control.close(() => onDismiss?.())
+          }
+        },
+      }}>
+      <DialogInner
+        uri={uri}
+        setDirty={setDirty}
+        onDismiss={onDismiss}
+        onPressCancel={onPressCancel}
+      />
+
+      <Prompt.Basic
+        control={cancelControl}
+        title={_(msg`Discard changes?`)}
+        description={_(msg`Are you sure you want to discard your changes?`)}
+        onConfirm={() => control.close(() => onDismiss?.())}
+        confirmButtonCta={_(msg`Discard`)}
+        confirmButtonColor="negative"
+      />
+    </Dialog.Outer>
+  )
+}
+
+function DialogInner({
+  uri,
+  setDirty,
+  onDismiss,
+  onPressCancel,
+}: {
+  uri: string | null
+  setDirty: (dirty: boolean) => void
+  onDismiss?: () => void
+  onPressCancel: () => void
+}) {
   const t = useTheme()
   const {_} = useLingui()
   const agent = useAgent()
+  const control = Dialog.useDialogContext()
   const {currentAccount} = useSession()
   const settings = useCrackSettings()
   const {update} = useCrackSettingsApi()
@@ -59,6 +131,13 @@ export function AlterEgoEditorDialog({
   const [newBanner, setNewBanner] = useState<PickerImage | null | undefined>()
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [initialValues, setInitialValues] = useState<InitialValues>({
+    displayName: '',
+    handle: '',
+    description: '',
+    avatar: null,
+    banner: null,
+  })
 
   const parsed = useMemo(() => (uri ? parseAlterEgoUri(uri) : null), [uri])
 
@@ -74,6 +153,13 @@ export function AlterEgoEditorDialog({
         setNewAvatar(undefined)
         setNewBanner(undefined)
         setError(null)
+        setInitialValues({
+          displayName: '',
+          handle: '',
+          description: '',
+          avatar: null,
+          banner: null,
+        })
         return
       }
       setError(null)
@@ -91,34 +177,43 @@ export function AlterEgoEditorDialog({
         setDisplayName(value.displayName ?? '')
         setHandle(value.handle ?? '')
         setDescription(value.description ?? '')
+        let resolvedAvatar: string | null = null
+        let resolvedBanner: string | null = null
         try {
-          setAvatarPreview(
+          resolvedAvatar =
             resolveAlterEgoBlobRefToUrl({
               agent,
               did: parsed.repo,
               blob: value.avatar,
-            }) ?? null,
-          )
+            }) ?? null
         } catch (avatarError) {
           logger.error('Failed to resolve alter ego avatar', {
             error: avatarError,
           })
-          setAvatarPreview(null)
         }
         try {
-          setBannerPreview(
+          resolvedBanner =
             resolveAlterEgoBlobRefToUrl({
               agent,
               did: parsed.repo,
               blob: value.banner,
-            }) ?? null,
-          )
+            }) ?? null
         } catch (bannerError) {
           logger.error('Failed to resolve alter ego banner', {
             error: bannerError,
           })
-          setBannerPreview(null)
         }
+        setAvatarPreview(resolvedAvatar)
+        setBannerPreview(resolvedBanner)
+        setNewAvatar(undefined)
+        setNewBanner(undefined)
+        setInitialValues({
+          displayName: value.displayName ?? '',
+          handle: value.handle ?? '',
+          description: value.description ?? '',
+          avatar: resolvedAvatar,
+          banner: resolvedBanner,
+        })
       } catch (loadError: any) {
         logger.error('Failed to load alter ego record', {error: loadError})
         setError(loadError?.message ?? _(msg`Failed to load alter ego record.`))
@@ -210,6 +305,7 @@ export function AlterEgoEditorDialog({
           newAvatar.path,
           newAvatar.mime,
         )
+        // @ts-expect-error
         nextRecord.avatar = avatarRes.data.blob
       } else if (newAvatar === null) {
         nextRecord.avatar = undefined
@@ -221,6 +317,7 @@ export function AlterEgoEditorDialog({
           newBanner.path,
           newBanner.mime,
         )
+        // @ts-expect-error
         nextRecord.banner = bannerRes.data.blob
       } else if (newBanner === null) {
         nextRecord.banner = undefined
@@ -257,119 +354,191 @@ export function AlterEgoEditorDialog({
     }
   }
 
+  const dirty =
+    displayName !== initialValues.displayName ||
+    handle !== initialValues.handle ||
+    description !== initialValues.description ||
+    avatarPreview !== initialValues.avatar ||
+    bannerPreview !== initialValues.banner
+
+  useEffect(() => {
+    setDirty(dirty)
+  }, [dirty, setDirty])
+
+  const displayNameTooLong = isOverMaxGraphemeCount({
+    text: displayName,
+    maxCount: MAX_DISPLAY_NAME_LENGTH,
+  })
+  const descriptionTooLong = isOverMaxGraphemeCount({
+    text: description,
+    maxCount: MAX_DESCRIPTION_LENGTH,
+  })
+  const handleTooLong = handle.length > MAX_HANDLE_LENGTH
+
   return (
-    <Dialog.Outer control={control} nativeOptions={{preventExpansion: true}}>
-      <Dialog.Handle />
-      <Dialog.ScrollableInner label="" style={web({maxWidth: 520})}>
-        <View style={[a.gap_lg]}>
-          <Text style={[a.text_2xl, a.font_bold]}>
-            <Trans>Edit alter ego</Trans>
-          </Text>
-          {uri && (
-            <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
-              <Trans>
-                Editing <Text style={[a.font_semi_bold]}>{uri}</Text>
-              </Trans>
-            </Text>
-          )}
-
-          <View style={[a.gap_md]}>
-            <View style={[a.gap_sm]}>
-              <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
-                <Trans>Avatar</Trans>
-              </Text>
-              <EditableUserAvatar
-                size={96}
-                avatar={avatarPreview}
-                onSelectNewAvatar={onSelectNewAvatar}
-              />
-            </View>
-
-            <View style={[a.gap_sm]}>
-              <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
-                <Trans>Banner</Trans>
-              </Text>
-              <UserBanner
-                banner={bannerPreview}
-                onSelectNewBanner={onSelectNewBanner}
-              />
-            </View>
-
-            <View style={[a.gap_sm]}>
-              <TextField.LabelText>
-                <Trans>Display name</Trans>
-              </TextField.LabelText>
-              <TextField.Root>
-                <TextField.Input
-                  label={_(msg`Display name`)}
-                  key={`${uri ?? 'alter-ego'}-displayName`}
-                  defaultValue={displayName}
-                  onChangeText={setDisplayName}
-                />
-              </TextField.Root>
-            </View>
-
-            <View style={[a.gap_sm]}>
-              <TextField.LabelText>
-                <Trans>Handle</Trans>
-              </TextField.LabelText>
-              <TextField.Root>
-                <TextField.Input
-                  label={_(msg`Handle`)}
-                  key={`${uri ?? 'alter-ego'}-handle`}
-                  defaultValue={handle}
-                  onChangeText={setHandle}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </TextField.Root>
-            </View>
-
-            <View style={[a.gap_sm]}>
-              <TextField.LabelText>
-                <Trans>Description</Trans>
-              </TextField.LabelText>
-              <TextField.Root>
-                <TextField.Input
-                  label={_(msg`Description`)}
-                  key={`${uri ?? 'alter-ego'}-description`}
-                  defaultValue={description}
-                  onChangeText={setDescription}
-                  multiline
-                />
-              </TextField.Root>
-            </View>
-          </View>
-
-          {error && (
-            <Text style={[a.text_sm, {color: t.palette.negative_400}]}>
-              {error}
-            </Text>
-          )}
-
-          <View style={[a.flex_row, a.justify_end, a.gap_sm]}>
+    <Dialog.ScrollableInner
+      label={_(msg`Edit alter ego`)}
+      style={[a.overflow_hidden, web({maxWidth: 520})]}
+      contentContainerStyle={[a.px_0, a.pt_0]}
+      header={
+        <Dialog.Header
+          renderLeft={() => (
             <Button
-              variant="solid"
-              color="secondary"
-              size="small"
               label={_(msg`Cancel`)}
-              onPress={() => control.close(() => onDismiss?.())}>
-              <ButtonText>{_(msg`Cancel`)}</ButtonText>
-            </Button>
-            <Button
-              variant="solid"
-              color="primary"
+              onPress={onPressCancel}
               size="small"
-              label={_(msg`Save`)}
-              disabled={isSaving}
-              onPress={onSave}>
-              <ButtonText>
-                {isSaving ? _(msg`Saving...`) : _(msg`Save`)}
+              color="primary"
+              variant="ghost"
+              style={[a.rounded_full]}>
+              <ButtonText style={[a.text_md]}>
+                <Trans>Cancel</Trans>
               </ButtonText>
             </Button>
-          </View>
+          )}
+          renderRight={() => (
+            <Button
+              label={_(msg`Save`)}
+              onPress={onSave}
+              disabled={
+                !dirty ||
+                isSaving ||
+                displayNameTooLong ||
+                descriptionTooLong ||
+                handleTooLong
+              }
+              size="small"
+              color="primary"
+              variant="ghost"
+              style={[a.rounded_full]}>
+              <ButtonText
+                style={[a.text_md, !dirty && t.atoms.text_contrast_low]}>
+                <Trans>Save</Trans>
+              </ButtonText>
+              {isSaving && <ButtonIcon icon={Loader} />}
+            </Button>
+          )}>
+          <Dialog.HeaderText>
+            <Trans>Edit alter ego</Trans>
+          </Dialog.HeaderText>
+        </Dialog.Header>
+      }>
+      <View style={[a.relative]}>
+        <UserBanner
+          banner={bannerPreview}
+          onSelectNewBanner={onSelectNewBanner}
+        />
+        <View
+          style={[
+            a.absolute,
+            {
+              top: 80,
+              left: 20,
+              width: 84,
+              height: 84,
+              borderWidth: 2,
+              borderRadius: 42,
+              borderColor: t.atoms.bg.backgroundColor,
+            },
+          ]}>
+          <EditableUserAvatar
+            size={80}
+            avatar={avatarPreview}
+            onSelectNewAvatar={onSelectNewAvatar}
+          />
         </View>
-      </Dialog.ScrollableInner>
-    </Dialog.Outer>
+      </View>
+
+      {error && (
+        <View style={[a.mt_xl]}>
+          <ErrorMessage message={error} />
+        </View>
+      )}
+
+      <View style={[a.mt_4xl, a.px_xl, a.gap_xl]}>
+        <View>
+          <TextField.LabelText>
+            <Trans>Display name</Trans>
+          </TextField.LabelText>
+          <TextField.Root isInvalid={displayNameTooLong}>
+            <Dialog.Input
+              defaultValue={displayName}
+              onChangeText={setDisplayName}
+              label={_(msg`Display name`)}
+              placeholder={_(msg`e.g. Kris Dreemurr`)}
+            />
+          </TextField.Root>
+          {displayNameTooLong && (
+            <Text
+              style={[
+                a.text_sm,
+                a.mt_xs,
+                a.font_semi_bold,
+                {color: t.palette.negative_400},
+              ]}>
+              <Plural
+                value={MAX_DISPLAY_NAME_LENGTH}
+                other="Display name is too long. The maximum number of characters is #."
+              />
+            </Text>
+          )}
+        </View>
+
+        <View>
+          <TextField.LabelText>
+            <Trans>Handle</Trans>
+          </TextField.LabelText>
+          <TextField.Root isInvalid={handleTooLong}>
+            <Dialog.Input
+              defaultValue={handle}
+              onChangeText={setHandle}
+              label={_(msg`Handle`)}
+              placeholder={_(msg`e.g. kris.darkworld`)}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </TextField.Root>
+          {handleTooLong && (
+            <Text
+              style={[
+                a.text_sm,
+                a.mt_xs,
+                a.font_semi_bold,
+                {color: t.palette.negative_400},
+              ]}>
+              <Trans>Handle must be 64 characters or less.</Trans>
+            </Text>
+          )}
+        </View>
+
+        <View>
+          <TextField.LabelText>
+            <Trans>Description</Trans>
+          </TextField.LabelText>
+          <TextField.Root isInvalid={descriptionTooLong}>
+            <Dialog.Input
+              defaultValue={description}
+              onChangeText={setDescription}
+              multiline
+              label={_(msg`Description`)}
+              placeholder={_(msg`Tell us a bit about yourself`)}
+            />
+          </TextField.Root>
+          {descriptionTooLong && (
+            <Text
+              style={[
+                a.text_sm,
+                a.mt_xs,
+                a.font_semi_bold,
+                {color: t.palette.negative_400},
+              ]}>
+              <Plural
+                value={MAX_DESCRIPTION_LENGTH}
+                other="Description is too long. The maximum number of characters is #."
+              />
+            </Text>
+          )}
+        </View>
+      </View>
+    </Dialog.ScrollableInner>
   )
 }

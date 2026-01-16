@@ -1,3 +1,4 @@
+import {useEffect, useMemo, useState} from 'react'
 import {type BskyAgent} from '@atproto/api'
 
 import {
@@ -9,6 +10,126 @@ import {
 } from '#/lib/crack/alter-ego'
 import {logger} from '#/logger'
 import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
+import {useAgent} from '#/state/session'
+
+type AlterEgoCacheListener = () => void
+
+const alterEgoOverlayCache = new Map<string, AlterEgoProfileOverlay>()
+const alterEgoOverlayRequests = new Map<
+  string,
+  Promise<AlterEgoProfileOverlay | undefined>
+>()
+const alterEgoOverlayListeners = new Set<AlterEgoCacheListener>()
+
+function notifyAlterEgoOverlayListeners() {
+  for (const listener of alterEgoOverlayListeners) {
+    listener()
+  }
+}
+
+export function primeAlterEgoOverlay(overlay: AlterEgoProfileOverlay) {
+  alterEgoOverlayCache.set(overlay.uri, overlay)
+  notifyAlterEgoOverlayListeners()
+}
+
+export function getCachedAlterEgoOverlay(uri: string) {
+  return alterEgoOverlayCache.get(uri)
+}
+
+async function loadAlterEgoOverlay({
+  agent,
+  uri,
+}: {
+  agent: BskyAgent
+  uri: string
+}) {
+  const cached = alterEgoOverlayCache.get(uri)
+  if (cached) {
+    return cached
+  }
+
+  const inflight = alterEgoOverlayRequests.get(uri)
+  if (inflight) {
+    return inflight
+  }
+
+  const request = fetchAlterEgoProfile({agent, uri})
+    .then(overlay => {
+      primeAlterEgoOverlay(overlay)
+      return overlay
+    })
+    .catch(error => {
+      logger.error('Failed to fetch alter ego overlay', {error})
+      return undefined
+    })
+    .finally(() => {
+      alterEgoOverlayRequests.delete(uri)
+    })
+
+  alterEgoOverlayRequests.set(uri, request)
+  return request
+}
+
+export function useAlterEgoOverlay(uri?: string) {
+  const agent = useAgent()
+  const [_version, setVersion] = useState(0)
+
+  useEffect(() => {
+    const onUpdate = () => setVersion(prev => prev + 1)
+    alterEgoOverlayListeners.add(onUpdate)
+    return () => {
+      alterEgoOverlayListeners.delete(onUpdate)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!uri) return
+    if (alterEgoOverlayCache.has(uri)) return
+    loadAlterEgoOverlay({agent, uri})
+  }, [agent, uri])
+
+  return useMemo(() => (uri ? alterEgoOverlayCache.get(uri) : undefined), [uri])
+}
+
+export function useAlterEgoOverlays(uris: string[]) {
+  const agent = useAgent()
+  const [_version, setVersion] = useState(0)
+  const uniqueUris = useMemo(
+    () => Array.from(new Set(uris.filter(Boolean))),
+    [uris],
+  )
+
+  useEffect(() => {
+    const onUpdate = () => setVersion(prev => prev + 1)
+    alterEgoOverlayListeners.add(onUpdate)
+    return () => {
+      alterEgoOverlayListeners.delete(onUpdate)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (uniqueUris.length === 0) return
+    let cancelled = false
+    const fetchAll = async () => {
+      await Promise.all(
+        uniqueUris.map(uri => loadAlterEgoOverlay({agent, uri})),
+      )
+      if (cancelled) return
+    }
+    fetchAll()
+    return () => {
+      cancelled = true
+    }
+  }, [agent, uniqueUris])
+
+  return useMemo(() => {
+    const overlays: Record<string, AlterEgoProfileOverlay | undefined> = {}
+    for (const uri of uris) {
+      overlays[uri] = alterEgoOverlayCache.get(uri)
+    }
+    return overlays
+  }, [uris])
+}
 
 export function resolveAlterEgoBlobRefToUrl({
   agent,
@@ -90,6 +211,9 @@ export async function fetchAlterEgoProfile({
 
 export function useActiveAlterEgo(did: string) {
   const settings = useCrackSettings()
+  if (!settings.alterEgoEnabled) {
+    return undefined
+  }
   const activeUri = settings.alterEgoByDid?.[did]
   return activeUri ? settings.alterEgoRecords?.[activeUri] : undefined
 }

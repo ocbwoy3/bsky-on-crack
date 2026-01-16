@@ -27,8 +27,6 @@ import {
 } from '#/state/preferences'
 import {atoms as a, useBreakpoints, useTheme} from '#/alf'
 import {Button} from '#/components/Button'
-import {AlterEgoDialog} from '#/components/crack/AlterEgoDialog'
-import {useDialogControl} from '#/components/Dialog'
 import {Divider} from '#/components/Divider'
 import * as Toggle from '#/components/forms/Toggle'
 import {ChevronRight_Stroke2_Corner0_Rounded as ChevronRight} from '#/components/icons/Chevron'
@@ -57,7 +55,6 @@ export function CrackSettingsScreen({}: Props) {
   const settings = useCrackSettings()
   const {update} = useCrackSettingsApi()
   const navigation = useNavigation<NavigationProp>()
-  const alterEgoDialogControl = useDialogControl()
   const gate = useGate()
 
   const onToggleSetting = (key: keyof CrackSettings, value: boolean) => {
@@ -76,7 +73,7 @@ export function CrackSettingsScreen({}: Props) {
         navigation.navigate('CrackVerificationSettings')
         break
       case 'openAlterEgo':
-        alterEgoDialogControl.open()
+        navigation.navigate('CrackAlterEgoSettings')
         break
     }
   }
@@ -147,7 +144,6 @@ export function CrackSettingsScreen({}: Props) {
           <StatsigSection gate={gate} />
         </View>
       </Layout.Content>
-      <AlterEgoDialog control={alterEgoDialogControl} />
     </Layout.Screen>
   )
 }
@@ -188,8 +184,10 @@ function StatsigSection({gate}: {gate: ReturnType<typeof useGate>}) {
               icon={FilterIcon}
               title={gateName}
               description={
+                //@ts-expect-error
                 typeof override === 'boolean'
-                  ? override
+                  ? // @ts-expect-error
+                    override
                     ? _(msg`Overridden: Enabled`)
                     : _(msg`Overridden: Disabled`)
                   : enabled
@@ -197,6 +195,7 @@ function StatsigSection({gate}: {gate: ReturnType<typeof useGate>}) {
                     : _(msg`Disabled`)
               }
               name={gateName}
+              //@ts-expect-error
               value={typeof override === 'boolean' ? override : enabled}
               onChange={next => setOverride(gateName, next)}
             />

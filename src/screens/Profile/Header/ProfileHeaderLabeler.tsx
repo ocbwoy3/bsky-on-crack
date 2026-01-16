@@ -4,8 +4,9 @@ import {
   type AppBskyActorDefs,
   type AppBskyLabelerDefs,
   moderateProfile,
+  type ModerationDecision,
   type ModerationOpts,
-  RichText as RichTextAPI,
+  type RichText as RichTextAPI,
 } from '@atproto/api'
 import {msg, Plural, plural, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
@@ -27,6 +28,7 @@ import {atoms as a, tokens, useTheme} from '#/alf'
 import {Button, ButtonText} from '#/components/Button'
 import {AgField} from '#/components/crack/AgField'
 import {type DialogOuterProps, useDialogControl} from '#/components/Dialog'
+import {useRichText} from '#/components/hooks/useRichText'
 import {
   Heart2_Filled_Stroke2_Corner0_Rounded as HeartFilled,
   Heart2_Stroke2_Corner0_Rounded as Heart,
@@ -129,29 +131,15 @@ let ProfileHeaderLabeler = ({
               field="description"
               value={profile.description ?? ''}
               did={profile.did}>
-              {alterDescription => {
-                const description =
-                  alterDescription === profile.description && descriptionRT
-                    ? descriptionRT
-                    : alterDescription
-                      ? new RichTextAPI({text: alterDescription})
-                      : null
-                if (!description || moderation.ui('profileView').blur) {
-                  return null
-                }
-                return (
-                  <View pointerEvents="auto">
-                    <RichText
-                      testID="profileHeaderDescription"
-                      style={[a.text_md]}
-                      numberOfLines={15}
-                      value={description}
-                      enableTags
-                      authorHandle={profile.handle}
-                    />
-                  </View>
-                )
-              }}
+              {alterDescription => (
+                <AlterEgoDescription
+                  alterDescription={alterDescription}
+                  baseDescription={profile.description ?? ''}
+                  descriptionRT={descriptionRT}
+                  moderation={moderation}
+                  authorHandle={profile.handle}
+                />
+              )}
             </AgField>
             {!isAppLabeler(profile.did) && (
               <View style={[a.flex_row, a.gap_xs, a.align_center, a.pt_lg]}>
@@ -212,6 +200,47 @@ let ProfileHeaderLabeler = ({
         )}
       </View>
     </ProfileHeaderShell>
+  )
+}
+
+function AlterEgoDescription({
+  alterDescription,
+  baseDescription,
+  descriptionRT,
+  moderation,
+  authorHandle,
+}: {
+  alterDescription: string
+  baseDescription: string
+  descriptionRT: RichTextAPI | null
+  moderation: ModerationDecision
+  authorHandle: string
+}) {
+  const resolveAlterFacets = alterDescription !== baseDescription
+  const [alterDescriptionRT] = useRichText(
+    resolveAlterFacets ? alterDescription : '',
+  )
+  const description = resolveAlterFacets
+    ? alterDescription
+      ? alterDescriptionRT
+      : null
+    : descriptionRT
+
+  if (!description || moderation.ui('profileView').blur) {
+    return null
+  }
+
+  return (
+    <View pointerEvents="auto">
+      <RichText
+        testID="profileHeaderDescription"
+        style={[a.text_md]}
+        numberOfLines={15}
+        value={description}
+        enableTags
+        authorHandle={authorHandle}
+      />
+    </View>
   )
 }
 ProfileHeaderLabeler = memo(ProfileHeaderLabeler)
