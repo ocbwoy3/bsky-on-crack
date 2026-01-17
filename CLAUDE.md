@@ -471,9 +471,9 @@ Example from Dialog:
 Platform detection:
 
 ```tsx
-import { isAndroid, isIOS, isNative, isWeb } from "#/platform/detection";
+import { IS_ANDROID, IS_IOS, IS_NATIVE, IS_WEB } from "#/env";
 
-if (isNative) {
+if (IS_NATIVE) {
   // Native-specific logic
 }
 ```
@@ -607,6 +607,7 @@ The Alter Ego system provides a UI-only profile overlay using
 `dev.ocbwoy3.crack.alterego` records.
 
 Key rules:
+
 - Never modify or override ATProto identity resolution
 - Never inject or hijack atproto client logic
 - Alter egos apply only at render time

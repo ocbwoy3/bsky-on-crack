@@ -12,7 +12,6 @@ import {
   type NativeStackScreenProps,
 } from '#/lib/routes/types'
 import {logger} from '#/logger'
-import {isIOS} from '#/platform/detection'
 import {useIsBirthdateUpdateAllowed} from '#/state/birthdate'
 import {useCrackSettings} from '#/state/preferences'
 import {
@@ -48,6 +47,7 @@ import {Loader} from '#/components/Loader'
 import {GlobalLabelPreference} from '#/components/moderation/LabelPreference'
 import {Text} from '#/components/Typography'
 import {useAgeAssurance} from '#/ageAssurance'
+import {IS_IOS} from '#/env'
 
 function ErrorState({error}: {error: string}) {
   const t = useTheme()
@@ -186,7 +186,7 @@ export function ModerationScreenInner({
     (optimisticAdultContent && optimisticAdultContent.enabled) ||
     (!optimisticAdultContent && preferences.moderationPrefs.adultContentEnabled)
   )
-  const adultContentUIDisabledOnIOS = isIOS && !adultContentEnabled
+  const adultContentUIDisabledOnIOS = IS_IOS && !adultContentEnabled
   let adultContentUIDisabled = adultContentUIDisabledOnIOS
 
   if (aa.flags.adultContentDisabled) {

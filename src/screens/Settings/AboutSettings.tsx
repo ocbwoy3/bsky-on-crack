@@ -11,7 +11,6 @@ import {Statsig} from 'statsig-react-native-expo'
 
 import {STATUS_PAGE_URL} from '#/lib/constants'
 import {type CommonNavigatorParams} from '#/lib/routes/types'
-import {isAndroid, isIOS, isNative} from '#/platform/detection'
 import * as Toast from '#/view/com/util/Toast'
 import * as SettingsList from '#/screens/Settings/components/SettingsList'
 import {CrackCreditsInfo} from '#/components/CrackComponents/CrackInfoComponent'
@@ -23,6 +22,7 @@ import {Newspaper_Stroke2_Corner2_Rounded as NewspaperIcon} from '#/components/i
 import {Wrench_Stroke2_Corner2_Rounded as WrenchIcon} from '#/components/icons/Wrench'
 import * as Layout from '#/components/Layout'
 import {Loader} from '#/components/Loader'
+import {IS_ANDROID, IS_IOS, IS_NATIVE} from '#/env'
 import * as env from '#/env'
 import {useDemoMode} from '#/storage/hooks/demo-mode'
 import {useDevMode} from '#/storage/hooks/dev-mode'
@@ -45,7 +45,7 @@ export function AboutSettingsScreen({}: Props) {
         return spaceDiff * -1
       },
       onSuccess: sizeDiffBytes => {
-        if (isAndroid) {
+        if (IS_ANDROID) {
           Toast.show(
             _(
               msg({
@@ -114,7 +114,7 @@ export function AboutSettingsScreen({}: Props) {
               <Trans>System log</Trans>
             </SettingsList.ItemText>
           </SettingsList.LinkItem>
-          {isNative && (
+          {IS_NATIVE && (
             <SettingsList.PressableItem
               onPress={() => onClearImageCache()}
               label={_(msg`Clear image cache`)}
@@ -163,7 +163,7 @@ export function AboutSettingsScreen({}: Props) {
           {devModeEnabled && (
             <>
               <OTAInfo />
-              {isIOS && (
+              {IS_IOS && (
                 <SettingsList.PressableItem
                   onPress={() => {
                     const newDemoModeEnabled = !demoModeEnabled

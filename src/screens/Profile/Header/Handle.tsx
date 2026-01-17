@@ -4,12 +4,12 @@ import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 
 import {isInvalidHandle, sanitizeHandle} from '#/lib/strings/handles'
-import {isIOS, isNative} from '#/platform/detection'
 import {type Shadow} from '#/state/cache/types'
 import {atoms as a, useTheme, web} from '#/alf'
 import {AgField} from '#/components/crack/AgField'
 import {NewskieDialog} from '#/components/NewskieDialog'
 import {Text} from '#/components/Typography'
+import {IS_IOS, IS_NATIVE} from '#/env'
 
 export function ProfileHeaderHandle({
   profile,
@@ -24,7 +24,7 @@ export function ProfileHeaderHandle({
   return (
     <View
       style={[a.flex_row, a.gap_sm, a.align_center, {maxWidth: '100%'}]}
-      pointerEvents={disableTaps ? 'none' : isIOS ? 'auto' : 'box-none'}>
+      pointerEvents={disableTaps ? 'none' : IS_IOS ? 'auto' : 'box-none'}>
       <NewskieDialog profile={profile} disabled={disableTaps} />
       {profile.viewer?.followedBy && !blockHide ? (
         <View style={[t.atoms.bg_contrast_50, a.rounded_xs, a.px_sm, a.py_xs]}>
@@ -63,7 +63,7 @@ export function ProfileHeaderHandle({
                     handleValue,
                     '@',
                     // forceLTR handled by CSS above on web
-                    isNative,
+                    IS_NATIVE,
                   )}
             </Text>
           )

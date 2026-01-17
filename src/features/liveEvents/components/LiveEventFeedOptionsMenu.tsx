@@ -3,14 +3,14 @@ import {msg, Trans} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 
 import {useCleanError} from '#/lib/hooks/useCleanError'
-import {isNative} from '#/platform/detection'
 import {atoms as a, web} from '#/alf'
 import {Admonition} from '#/components/Admonition'
 import {Button, ButtonIcon, ButtonText} from '#/components/Button'
 import * as Dialog from '#/components/Dialog'
 import {Loader} from '#/components/Loader'
-import * as Toast from '#/components/Toast'
+import * as toast from '#/components/Toast'
 import {Span, Text} from '#/components/Typography'
+import {IS_NATIVE} from '#/env'
 import {useUpdateLiveEventPreferences} from '#/features/liveEvents/preferences'
 import {
   type LiveEventFeed,
@@ -61,14 +61,14 @@ function Inner({
     feed,
     metricContext,
     onUpdateSuccess({undoAction}) {
-      Toast.show(
-        <Toast.Outer>
-          <Toast.Icon />
-          <Toast.Text>
+      toast.show(
+        <toast.Outer>
+          <toast.Icon />
+          <toast.Text>
             <Trans>Your live event preferences have been updated.</Trans>
-          </Toast.Text>
+          </toast.Text>
           {undoAction && (
-            <Toast.Action
+            <toast.Action
               label={_(msg`Undo`)}
               onPress={() => {
                 if (undoAction) {
@@ -76,10 +76,12 @@ function Inner({
                 }
               }}>
               <Trans>Undo</Trans>
-            </Toast.Action>
+            </toast.Action>
           )}
-        </Toast.Outer>,
-        {type: 'success'},
+        </toast.Outer>,
+        {
+          type: 'success',
+        },
       )
 
       /*
@@ -146,7 +148,7 @@ function Inner({
           </ButtonText>
           {isHidingAllFeeds && <ButtonIcon icon={Loader} />}
         </Button>
-        {isNative && (
+        {IS_NATIVE && (
           <Button
             label={_(msg`Cancel`)}
             size="large"
