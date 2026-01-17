@@ -11,14 +11,13 @@ import chunk from 'lodash.chunk'
 import {makeProfileLink} from '#/lib/routes/links'
 import {type CommonNavigatorParams} from '#/lib/routes/types'
 import {sanitizeHandle} from '#/lib/strings/handles'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
 import {
   APPVIEW_DEFAULT_VERIFIERS,
   LABELER_NEG_VERIFIERS,
 } from '#/state/preferences/crack-settings-api'
-import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useMyLabelersQuery} from '#/state/queries/preferences/moderation'
-import {useProfileQuery} from '#/state/queries/profile'
 import {useAgent, useSession} from '#/state/session'
 import {useCustomVerificationTrustedList} from '#/state/verification/custom-verifiers'
 import * as Toast from '#/view/com/util/Toast'
@@ -29,8 +28,8 @@ import {Divider} from '#/components/Divider'
 import * as Toggle from '#/components/forms/Toggle'
 import * as Layout from '#/components/Layout'
 import {InlineLinkText, Link} from '#/components/Link'
-import {Default as ProfileCard} from '#/components/ProfileCard'
 import {Text} from '#/components/Typography'
+import {AgField} from '../crack/AgField'
 
 type Props = NativeStackScreenProps<
   CommonNavigatorParams,
@@ -47,20 +46,18 @@ export function CrackVerificationSettingsScreen({}: Props) {
   const {gtMobile} = useBreakpoints()
   const agent = useAgent()
   const {currentAccount} = useSession()
-  const {data: myProfile} = useProfileQuery({did: currentAccount?.did})
   const {trusted, setTrustedList, addTrusted, removeTrusted} =
     useCustomVerificationTrustedList()
   const {customVerificationsEnabled} = useCrackSettings()
   const {update} = useCrackSettingsApi()
   const labelers = useMyLabelersQuery()
-  const moderationOpts = useModerationOpts()
 
   const orderedVerifierDids = useMemo(() => trusted, [trusted])
 
-  const profilesQuery = useQuery({
+  const profilesQuery = useQuery<ProfileMap>({
     enabled: orderedVerifierDids.length > 0,
     queryKey: [QUERY_KEY_ROOT, orderedVerifierDids],
-    queryFn: async () => {
+    queryFn: async (): Promise<ProfileMap> => {
       const profilesByDid: ProfileMap = new Map()
       for (const didChunk of chunk(orderedVerifierDids, 25)) {
         const res = await agent.getProfiles({actors: didChunk})
@@ -77,13 +74,16 @@ export function CrackVerificationSettingsScreen({}: Props) {
       string,
       Array<{did: string; handle: string; handleRaw?: string}>
     >()
+
     for (const labeler of labelers.data ?? []) {
       const negated = LABELER_NEG_VERIFIERS[labeler.creator.did]
       if (!negated?.length) continue
+
       const handleRaw = labeler.creator.handle
       const handle = handleRaw
-        ? sanitizeHandle(handleRaw, '@')
+        ? sanitizeHandle(handleRaw, '') // <-- keep ''
         : labeler.creator.did
+
       for (const did of negated) {
         const existing = map.get(did) ?? []
         map.set(did, [
@@ -92,6 +92,7 @@ export function CrackVerificationSettingsScreen({}: Props) {
         ])
       }
     }
+
     return map
   }, [labelers.data])
 
@@ -119,25 +120,14 @@ export function CrackVerificationSettingsScreen({}: Props) {
         </Layout.Header.Content>
         <Layout.Header.Slot />
       </Layout.Header.Outer>
+
       <Layout.Content>
         <View style={[a.pt_2xl, a.px_lg, gtMobile && a.px_2xl]}>
           <Text
             style={[a.text_md, a.font_semi_bold, t.atoms.text_contrast_high]}>
-            <Trans>Identity Preview</Trans>
-          </Text>
-          <View style={[a.mt_sm, a.mb_xl]}>
-            {myProfile && moderationOpts && (
-              <ProfileCard
-                profile={myProfile}
-                moderationOpts={moderationOpts}
-              />
-            )}
-          </View>
-
-          <Text
-            style={[a.text_md, a.font_semi_bold, t.atoms.text_contrast_high]}>
             <Trans>Verification settings</Trans>
           </Text>
+
           <View
             style={[
               a.w_full,
@@ -168,11 +158,9 @@ export function CrackVerificationSettingsScreen({}: Props) {
               disabled={!currentAccount?.did}
               onChange={next => {
                 if (!currentAccount?.did) return
-                if (next) {
-                  addTrusted(currentAccount.did)
-                } else {
-                  removeTrusted(currentAccount.did)
-                }
+                next
+                  ? addTrusted(currentAccount.did)
+                  : removeTrusted(currentAccount.did)
               }}
             />
           </View>
@@ -191,7 +179,7 @@ export function CrackVerificationSettingsScreen({}: Props) {
             </Text>
             <View style={[a.flex_row, a.align_center, a.gap_sm]}>
               <Button
-                label={_(msg`Copy verifier DIDs`)}
+                label="Copy DIDs"
                 size="tiny"
                 shape="rectangular"
                 variant="outline"
@@ -203,7 +191,7 @@ export function CrackVerificationSettingsScreen({}: Props) {
                 </ButtonText>
               </Button>
               <Button
-                label={_(msg`Reset trusted verifiers`)}
+                label="Reset to AppView defaults"
                 size="tiny"
                 shape="rectangular"
                 variant="outline"
@@ -215,6 +203,7 @@ export function CrackVerificationSettingsScreen({}: Props) {
               </Button>
             </View>
           </View>
+
           <View
             style={[
               a.w_full,
@@ -230,109 +219,120 @@ export function CrackVerificationSettingsScreen({}: Props) {
                 </Text>
               </View>
             ) : (
-              orderedVerifierDids.map((did, index) => {
-                const profile = profilesQuery.data?.get(did)
-                const handle = profile?.handle ?? did
-                const safeHandle = profile?.handle
-                  ? sanitizeHandle(profile.handle, '@')
-                  : handle
-                const displayName = profile?.displayName?.trim() || safeHandle
-                const negatedBy = negatedByMap.get(did)
-                const to = makeProfileLink({
-                  did,
-                  handle: profile?.handle ?? did,
-                })
-
-                return (
-                  <Fragment key={did}>
-                    {index > 0 && <Divider />}
-                    <Link label={displayName} to={to}>
-                      {state => (
-                        <View
-                          style={[
-                            a.w_full,
-                            a.flex_row,
-                            a.align_center,
-                            a.justify_between,
-                            a.p_lg,
-                            a.gap_sm,
-                            (state.hovered || state.pressed) && [
-                              t.atoms.bg_contrast_50,
-                            ],
-                          ]}>
-                          <View
-                            style={[
-                              a.flex_row,
-                              a.align_center,
-                              a.gap_md,
-                              a.flex_1,
-                            ]}>
-                            <UserAvatar
-                              type="user"
-                              size={40}
-                              avatar={profile?.avatar}
-                            />
-                            <View style={[a.flex_1, a.gap_2xs]}>
-                              <Text style={[a.text_md, a.font_semi_bold]}>
-                                {displayName}
-                              </Text>
-                              {negatedBy?.length ? (
-                                <Text style={[a.text_sm, a.flex_wrap]}>
-                                  <Text
-                                    style={[
-                                      a.text_sm,
-                                      t.atoms.text_contrast_medium,
-                                    ]}>
-                                    {safeHandle}
-                                  </Text>
-                                  {' · '}
-                                  <Text style={{color: t.palette.negative_600}}>
-                                    <Trans>Negated by</Trans>
-                                  </Text>
-                                  {negatedBy.map((entry, entryIndex) => {
-                                    const entryLabel = entry.handle
-                                    const entryTo = makeProfileLink({
-                                      did: entry.did,
-                                      handle: entry.handleRaw ?? entry.did,
-                                    })
-                                    return (
-                                      <Fragment key={entry.did}>
-                                        {entryIndex > 0 && <Text>{', '}</Text>}
-                                        <InlineLinkText
-                                          to={entryTo}
-                                          label={entryLabel}
-                                          style={{
-                                            color: t.palette.primary_500,
-                                            paddingLeft: 3,
-                                          }}>
-                                          {entryLabel}
-                                        </InlineLinkText>
-                                      </Fragment>
-                                    )
-                                  })}
-                                </Text>
-                              ) : (
-                                <Text
-                                  style={[
-                                    a.text_sm,
-                                    t.atoms.text_contrast_medium,
-                                  ]}>
-                                  {safeHandle}
-                                </Text>
-                              )}
-                            </View>
-                          </View>
-                        </View>
-                      )}
-                    </Link>
-                  </Fragment>
-                )
-              })
+              orderedVerifierDids.map((did, index) => (
+                <TrustedVerifierRow
+                  key={did}
+                  did={did}
+                  index={index}
+                  profilesQuery={profilesQuery}
+                  negatedByMap={negatedByMap}
+                />
+              ))
             )}
           </View>
         </View>
       </Layout.Content>
     </Layout.Screen>
+  )
+}
+
+function TrustedVerifierRow({
+  did,
+  index,
+  profilesQuery,
+  negatedByMap,
+}: {
+  did: string
+  index: number
+  profilesQuery: ReturnType<typeof useQuery<ProfileMap>>
+  negatedByMap: Map<string, any[]>
+}) {
+  const t = useTheme()
+  const profile = profilesQuery?.data?.get(did)
+  const displayProfile = useAlterEgoProfileFields({did})
+
+  const handle = profile?.handle ?? did
+  const safeHandle = profile?.handle
+    ? sanitizeHandle(profile.handle, '')
+    : handle
+  const displayName = profile?.displayName?.trim() || safeHandle
+  const negatedBy = negatedByMap.get(did)
+
+  const to = makeProfileLink({
+    did,
+    handle: profile?.handle ?? did,
+  })
+
+  return (
+    <Fragment>
+      {index > 0 && <Divider />}
+      <Link label={displayName} to={to}>
+        {state => (
+          <View
+            style={[
+              a.w_full,
+              a.flex_row,
+              a.align_center,
+              a.justify_between,
+              a.p_lg,
+              a.gap_sm,
+              (state.hovered || state.pressed) && t.atoms.bg_contrast_50,
+            ]}>
+            <View style={[a.flex_row, a.align_center, a.gap_md, a.flex_1]}>
+              <UserAvatar
+                type="user"
+                size={40}
+                avatar={displayProfile.avatar ?? profile?.avatar}
+              />
+              <View style={[a.flex_1, a.gap_2xs]}>
+                <Text style={[a.text_md, a.font_semi_bold]}>
+                  <AgField field="displayName" value={displayName} did={did} />
+                </Text>
+
+                {negatedBy?.length ? (
+                  <Text style={[a.text_sm, a.flex_wrap]}>
+                    <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
+                      {safeHandle}
+                    </Text>
+                    {' · '}
+                    <Text
+                      style={{color: t.palette.negative_600, paddingRight: 3}}>
+                      <Trans>Negated by</Trans>
+                    </Text>
+                    {negatedBy.map((entry, i) => {
+                      const toNegator = makeProfileLink({
+                        did: entry.did,
+                        handle: entry.handleRaw ?? entry.did,
+                      })
+                      return (
+                        <Fragment key={entry.did}>
+                          {i > 0 && <Text>, </Text>}
+                          <InlineLinkText
+                            to={toNegator}
+                            label={entry.handle}
+                            style={{color: t.palette.primary_500}}>
+                            @
+                            <AgField
+                              field="handle"
+                              value={entry.handle}
+                              did={entry.did}
+                            />
+                          </InlineLinkText>
+                        </Fragment>
+                      )
+                    })}
+                  </Text>
+                ) : (
+                  <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
+                    {safeHandle}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </View>
+        )}
+      </Link>
+    </Fragment>
   )
 }
 
