@@ -39,6 +39,7 @@ import {AgeAssuranceDismissibleNotice} from '#/components/ageAssurance/AgeAssura
 import {AvatarStackWithFetch} from '#/components/AvatarStack'
 import {Button, ButtonText} from '#/components/Button'
 import {useIsFindContactsFeatureEnabledBasedOnGeolocation} from '#/components/contacts/country-allowlist'
+import {AgField} from '#/components/crack/AgField'
 import {useDialogControl} from '#/components/Dialog'
 import {SwitchAccountDialog} from '#/components/dialogs/SwitchAccount'
 import {Accessibility_Stroke2_Corner2_Rounded as AccessibilityIcon} from '#/components/icons/Accessibility'
@@ -632,21 +633,29 @@ function AccountRow({
         onPress={onSwitchAccount}
         label={_(msg`Switch account`)}>
         {moderationOpts && profile ? (
-          <UserAvatar
-            size={28}
-            avatar={profile.avatar}
-            moderation={moderateProfile(profile, moderationOpts).ui('avatar')}
-            type={profile.associated?.labeler ? 'labeler' : 'user'}
-            live={live}
-            hideLiveBadge
-          />
+          <AgField field="avatar" value={profile.avatar} did={account.did}>
+            {avatar => (
+              <UserAvatar
+                size={28}
+                avatar={avatar}
+                moderation={moderateProfile(profile, moderationOpts).ui(
+                  'avatar',
+                )}
+                type={profile.associated?.labeler ? 'labeler' : 'user'}
+                live={live}
+                hideLiveBadge
+              />
+            )}
+          </AgField>
         ) : (
           <View style={[{width: 28}]} />
         )}
         <SettingsList.ItemText
           numberOfLines={1}
           style={[a.pr_2xl, a.leading_snug]}>
-          {sanitizeHandle(account.handle, '@')}
+          <AgField field="handle" value={account.handle} did={account.did}>
+            {handle => sanitizeHandle(handle, '@')}
+          </AgField>
         </SettingsList.ItemText>
         {pendingDid === account.did && <SettingsList.ItemIcon icon={Loader} />}
       </SettingsList.PressableItem>

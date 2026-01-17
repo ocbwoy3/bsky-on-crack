@@ -12,6 +12,7 @@ import {Trans} from '@lingui/macro'
 import {useQueryClient} from '@tanstack/react-query'
 
 import {makeProfileLink} from '#/lib/routes/links'
+import {useActiveAlterEgo} from '#/state/crack/alter-ego'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {unstableCacheProfileView} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
@@ -202,6 +203,7 @@ export function PostDetachedEmbed({
   embed: EmbedType<'post_detached'>
 }) {
   const {currentAccount} = useSession()
+  const activeAlterEgo = useActiveAlterEgo(currentAccount?.did ?? '')
   const isViewerOwner = currentAccount?.did
     ? embed.view.uri.includes(currentAccount.did)
     : false
@@ -209,7 +211,11 @@ export function PostDetachedEmbed({
   return (
     <PostPlaceholderText>
       {isViewerOwner ? (
-        <Trans>Removed by you</Trans>
+        activeAlterEgo ? (
+          <Trans>Removed by {activeAlterEgo.handle}</Trans>
+        ) : (
+          <Trans>Removed by you</Trans>
+        )
       ) : (
         <Trans>Removed by author</Trans>
       )}
@@ -245,11 +251,16 @@ export function QuoteEmbed({
     return moderationOpts ? moderatePost(quote, moderationOpts) : undefined
   }, [quote, moderationOpts])
 
+  const {currentAccount} = useSession()
+  const activeAlterEgo = useActiveAlterEgo(currentAccount?.did ?? '')
   const t = useTheme()
   const queryClient = useQueryClient()
   const itemUrip = new AtUri(quote.uri)
   const itemHref = makeProfileLink(quote.author, 'post', itemUrip.rkey)
-  const itemTitle = `Post by ${quote.author.handle}`
+  const isMe = quote.author.did === currentAccount?.did
+  const handle =
+    isMe && activeAlterEgo ? activeAlterEgo.handle : quote.author.handle
+  const itemTitle = `Post by ${handle}`
 
   const richText = useMemo(() => {
     if (

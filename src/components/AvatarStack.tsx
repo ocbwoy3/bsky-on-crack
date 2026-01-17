@@ -6,6 +6,7 @@ import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useProfilesQuery} from '#/state/queries/profile'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {atoms as a, useTheme} from '#/alf'
+import {AgField} from '#/components/crack/AgField'
 import type * as bsky from '#/types/bsky'
 
 export function AvatarStack({
@@ -62,12 +63,19 @@ export function AvatarStack({
             },
           ]}>
           {item.profile && (
-            <UserAvatar
-              size={size - 2}
-              avatar={item.profile.avatar}
-              type={item.profile.associated?.labeler ? 'labeler' : 'user'}
-              moderation={item.moderation.ui('avatar')}
-            />
+            <AgField
+              field="avatar"
+              value={item.profile.avatar}
+              did={item.profile.did}>
+              {avatar => (
+                <UserAvatar
+                  size={size - 2}
+                  avatar={avatar}
+                  type={item.profile.associated?.labeler ? 'labeler' : 'user'}
+                  moderation={item.moderation.ui('avatar')}
+                />
+              )}
+            </AgField>
           )}
         </View>
       ))}
