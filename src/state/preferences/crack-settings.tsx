@@ -2,7 +2,6 @@ import React from 'react'
 
 import {parseAlterEgoUri} from '#/lib/crack/alter-ego'
 import {logger} from '#/logger'
-import {isWeb} from '#/platform/detection'
 import {
   createCrackSettingsPreference,
   fetchCrackSettingsPreference,
@@ -15,6 +14,7 @@ import {
   crackSettingsDefaults,
 } from '#/state/preferences/crack-settings-api'
 import {useAgent, useSession} from '#/state/session'
+import {IS_WEB} from '#/env'
 
 const defaultSettings = crackSettingsDefaults
 
@@ -163,7 +163,7 @@ export function Provider({children}: React.PropsWithChildren<{}>) {
   }, [agent, currentAccount?.did, hasSession, queueRemoteSync])
 
   React.useEffect(() => {
-    if (!isWeb || typeof window === 'undefined') return
+    if (!IS_WEB || typeof window === 'undefined') return
     const kawaiiParam = new URLSearchParams(window.location.search).get(
       'kawaii',
     )

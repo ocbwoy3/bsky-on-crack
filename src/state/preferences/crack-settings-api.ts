@@ -1,5 +1,5 @@
-import {isWeb} from '#/platform/detection'
 import {type Schema} from '#/state/persisted/schema'
+import {IS_WEB} from '#/env'
 
 export type CrackSettings = NonNullable<Schema['crackSettings']>
 export type CrackSettingKey = keyof CrackSettings
@@ -156,7 +156,7 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         label: 'Welcome',
         description: 'Web only',
         buttonLabel: 'Open',
-        predicate: () => Boolean(isWeb),
+        predicate: () => Boolean(IS_WEB),
       },
     ],
   },
