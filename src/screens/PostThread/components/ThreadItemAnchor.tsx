@@ -25,6 +25,7 @@ import {
   usePostShadow,
 } from '#/state/cache/post-shadow'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {FeedFeedbackProvider, useFeedFeedback} from '#/state/feed-feedback'
 import {useLanguagePrefs} from '#/state/preferences'
 import {type ThreadItem} from '#/state/queries/usePostThread/types'
@@ -314,6 +315,8 @@ const ThreadItemAnchorInner = memo(function ThreadItemAnchorInner({
     }
   }
 
+  const displayAuthor = useAlterEgoProfileFields(post.author)
+
   return (
     <>
       <ThreadItemAnchorParentReplyLine isRoot={isRoot} />
@@ -358,7 +361,8 @@ const ThreadItemAnchorInner = memo(function ThreadItemAnchorInner({
                     ]}
                     numberOfLines={1}>
                     {sanitizeDisplayName(
-                      post.author.displayName ||
+                      displayAuthor.displayName ||
+                        post.author.displayName ||
                         sanitizeHandle(post.author.handle),
                       moderation.ui('displayName'),
                     )}
@@ -375,7 +379,10 @@ const ThreadItemAnchorInner = memo(function ThreadItemAnchorInner({
                     t.atoms.text_contrast_medium,
                   ]}
                   numberOfLines={1}>
-                  {sanitizeHandle(post.author.handle, '@')}
+                  {sanitizeHandle(
+                    displayAuthor.handle || post.author.handle,
+                    '@',
+                  )}
                 </Text>
               </ProfileHoverCard>
             </View>
