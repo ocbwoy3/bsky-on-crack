@@ -15,6 +15,7 @@ import {sanitizeHandle} from '#/lib/strings/handles'
 import {type ComposerOptsPostRef} from '#/state/shell/composer'
 import {PreviewableUserAvatar} from '#/view/com/util/UserAvatar'
 import {atoms as a, useTheme, web} from '#/alf'
+import {AgField} from '#/components/crack/AgField'
 import {QuoteEmbed} from '#/components/Post/Embed'
 import {Text} from '#/components/Typography'
 import {useSimpleVerificationState} from '#/components/verification'
@@ -100,15 +101,31 @@ export function ComposerReplyTo({replyTo}: {replyTo: ComposerOptsPostRef}) {
       />
       <View style={[a.flex_1, a.pl_md, a.pr_sm, a.gap_2xs]}>
         <View style={[a.flex_row, a.align_center, a.pr_xs]}>
-          <Text
-            style={[a.font_semi_bold, a.text_md, a.leading_snug, a.flex_shrink]}
-            numberOfLines={1}
-            emoji>
-            {sanitizeDisplayName(
-              replyTo.author.displayName ||
-                sanitizeHandle(replyTo.author.handle),
+          <AgField
+            field="displayName"
+            value={replyTo.author.displayName}
+            did={replyTo.author.did}>
+            {displayName => (
+              <AgField
+                field="handle"
+                value={replyTo.author.handle}
+                did={replyTo.author.did}>
+                {handle => (
+                  <Text
+                    style={[
+                      a.font_semi_bold,
+                      a.text_md,
+                      a.leading_snug,
+                      a.flex_shrink,
+                    ]}
+                    numberOfLines={1}
+                    emoji>
+                    {sanitizeDisplayName(displayName || sanitizeHandle(handle))}
+                  </Text>
+                )}
+              </AgField>
             )}
-          </Text>
+          </AgField>
           {verification.showBadge && (
             <View style={[a.pl_xs]}>
               <VerificationCheck

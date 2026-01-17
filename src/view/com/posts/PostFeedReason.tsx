@@ -6,6 +6,7 @@ import {useLingui} from '@lingui/react'
 import {isReasonFeedSource, type ReasonFeedSource} from '#/lib/api/feed/types'
 import {createSanitizedDisplayName} from '#/lib/moderation/create-sanitized-display-name'
 import {makeProfileLink} from '#/lib/routes/links'
+import {useActiveAlterEgo} from '#/state/crack/alter-ego'
 import {useSession} from '#/state/session'
 import {atoms as a, useTheme} from '#/alf'
 import {Pin_Stroke2_Corner0_Rounded as PinIcon} from '#/components/icons/Pin'
@@ -63,9 +64,17 @@ export function PostFeedReason({
   }
 
   if (AppBskyFeedDefs.isReasonRepost(reason)) {
-    const isOwner = reason.by.did === currentAccount?.did
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const activeAlterEgo = useActiveAlterEgo(reason.by.did)
+    const isOwner = reason.by.did === currentAccount?.did && !activeAlterEgo
     const reposter = createSanitizedDisplayName(
-      reason.by,
+      activeAlterEgo
+        ? {
+            ...reason.by,
+            handle: activeAlterEgo.handle ?? reason.by.handle,
+            displayName: activeAlterEgo.displayName ?? reason.by.displayName,
+          }
+        : reason.by,
       false,
       moderation?.ui('displayName'),
     )

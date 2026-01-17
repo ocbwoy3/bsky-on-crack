@@ -6,6 +6,7 @@ import {useLingui} from '@lingui/react'
 import {PressableScale} from '#/lib/custom-animations/PressableScale'
 import {useHaptics} from '#/lib/haptics'
 import {useHideBottomBarBorderForScreen} from '#/lib/hooks/useHideBottomBarBorder'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useProfileQuery} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
@@ -23,6 +24,9 @@ export function ThreadComposePrompt({
 }) {
   const {currentAccount} = useSession()
   const {data: profile} = useProfileQuery({did: currentAccount?.did})
+  const displayProfile = useAlterEgoProfileFields(
+    profile ?? {did: currentAccount?.did ?? ''},
+  )
   const {_} = useLingui()
   const {gtMobile} = useBreakpoints()
   const t = useTheme()
@@ -34,6 +38,8 @@ export function ThreadComposePrompt({
   } = useInteractionState()
 
   useHideBottomBarBorderForScreen()
+
+  if (!currentAccount) return null
 
   return (
     <View
@@ -83,7 +89,7 @@ export function ThreadComposePrompt({
         ]}>
         <UserAvatar
           size={24}
-          avatar={profile?.avatar}
+          avatar={displayProfile.avatar}
           type={profile?.associated?.labeler ? 'labeler' : 'user'}
         />
         <Text style={[a.text_md, t.atoms.text_contrast_medium]}>

@@ -16,7 +16,9 @@ import {
   APPVIEW_DEFAULT_VERIFIERS,
   LABELER_NEG_VERIFIERS,
 } from '#/state/preferences/crack-settings-api'
+import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useMyLabelersQuery} from '#/state/queries/preferences/moderation'
+import {useProfileQuery} from '#/state/queries/profile'
 import {useAgent, useSession} from '#/state/session'
 import {useCustomVerificationTrustedList} from '#/state/verification/custom-verifiers'
 import * as Toast from '#/view/com/util/Toast'
@@ -27,6 +29,7 @@ import {Divider} from '#/components/Divider'
 import * as Toggle from '#/components/forms/Toggle'
 import * as Layout from '#/components/Layout'
 import {InlineLinkText, Link} from '#/components/Link'
+import {Default as ProfileCard} from '#/components/ProfileCard'
 import {Text} from '#/components/Typography'
 
 type Props = NativeStackScreenProps<
@@ -44,11 +47,13 @@ export function CrackVerificationSettingsScreen({}: Props) {
   const {gtMobile} = useBreakpoints()
   const agent = useAgent()
   const {currentAccount} = useSession()
+  const {data: myProfile} = useProfileQuery({did: currentAccount?.did})
   const {trusted, setTrustedList, addTrusted, removeTrusted} =
     useCustomVerificationTrustedList()
   const {customVerificationsEnabled} = useCrackSettings()
   const {update} = useCrackSettingsApi()
   const labelers = useMyLabelersQuery()
+  const moderationOpts = useModerationOpts()
 
   const orderedVerifierDids = useMemo(() => trusted, [trusted])
 
@@ -116,6 +121,19 @@ export function CrackVerificationSettingsScreen({}: Props) {
       </Layout.Header.Outer>
       <Layout.Content>
         <View style={[a.pt_2xl, a.px_lg, gtMobile && a.px_2xl]}>
+          <Text
+            style={[a.text_md, a.font_semi_bold, t.atoms.text_contrast_high]}>
+            <Trans>Identity Preview</Trans>
+          </Text>
+          <View style={[a.mt_sm, a.mb_xl]}>
+            {myProfile && moderationOpts && (
+              <ProfileCard
+                profile={myProfile}
+                moderationOpts={moderationOpts}
+              />
+            )}
+          </View>
+
           <Text
             style={[a.text_md, a.font_semi_bold, t.atoms.text_contrast_high]}>
             <Trans>Verification settings</Trans>
