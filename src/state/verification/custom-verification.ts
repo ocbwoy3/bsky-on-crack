@@ -85,7 +85,7 @@ async function* constellationLinks({
     search.set('collection', params.collection)
     search.set('path', params.path)
     if (params.from_dids?.length) {
-      params.from_dids.forEach(did => search.append('from_dids', did))
+      params.from_dids.forEach(did => search.append('did', did))
     }
     if (params.did) {
       search.set('did', params.did)
