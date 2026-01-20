@@ -11,6 +11,8 @@ import {
 } from '#/lib/hooks/usePermissions'
 import {openCamera, openUnifiedPicker} from '#/lib/media/picker'
 import {logger} from '#/logger'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
+import {useCrackSettings} from '#/state/preferences'
 import {useCurrentAccountProfile} from '#/state/queries/useCurrentAccountProfile'
 import {MAX_IMAGES} from '#/view/com/composer/state/composer'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
@@ -131,9 +133,17 @@ export function ComposerPrompt() {
     }
   }, [openComposer, requestCameraAccessIfNeeded])
 
+  const displayProfile = useAlterEgoProfileFields({
+    did: profile?.did || '',
+  })
+
+  const crackSettings = useCrackSettings()
+
   if (!profile) {
     return null
   }
+
+  if (crackSettings.disableInlineComposer === true) return null
 
   return (
     <Pressable
@@ -165,7 +175,7 @@ export function ComposerPrompt() {
       ]}>
       <SubtleHover hover={hover} />
       <UserAvatar
-        avatar={profile.avatar}
+        avatar={displayProfile.avatar ?? profile.avatar}
         size={42}
         type={profile.associated?.labeler ? 'labeler' : 'user'}
       />

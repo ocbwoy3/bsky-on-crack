@@ -131,6 +131,7 @@ const schema = z.object({
       hijackHideLabels: z.boolean().optional(),
       hideSuggestedAccounts: z.boolean().optional(),
       alterEgoEnabled: z.boolean().optional(),
+      disableInlineComposer: z.boolean().optional(),
       alterEgoUri: z.string().optional(),
       alterEgoByDid: z.record(z.string()).optional(),
       alterEgoRecords: z
@@ -205,6 +206,7 @@ export const defaults: Schema = {
     hijackHideLabels: false,
     hideSuggestedAccounts: false,
     alterEgoEnabled: true,
+    disableInlineComposer: true,
     alterEgoUri: undefined,
     alterEgoByDid: {},
     alterEgoRecords: {},

@@ -12,6 +12,7 @@ export const crackSettingsDefaults: CrackSettings = {
   hijackHideLabels: false,
   hideSuggestedAccounts: false,
   alterEgoEnabled: true,
+  disableInlineComposer: false,
   alterEgoUri: undefined,
   alterEgoByDid: {},
   alterEgoRecords: {},
@@ -99,8 +100,8 @@ export const crackSettingsSections: CrackSettingsSection[] = [
       {
         type: 'toggle',
         key: 'hideSuggestedAccounts',
-        label: 'Hide suggested accounts',
-        description: "AppView's Social Graph thing, or whatever.",
+        label: 'Hide suggested follows',
+        description: 'Declutter profiles.',
       },
 
       {
@@ -108,6 +109,12 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         key: 'hijackHideLabels',
         label: 'Bypass !hide',
         description: 'Lets you view hidden users and lists.',
+      },
+      {
+        type: 'toggle',
+        key: 'disableInlineComposer',
+        label: 'Disable composer prompt',
+        description: 'Declutter home.',
       },
       {
         type: 'button',
