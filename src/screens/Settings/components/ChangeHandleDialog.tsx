@@ -232,7 +232,7 @@ function ProvidedHandlePage({
                 defaultValue={subdomain}
                 onChangeText={text => setSubdomain(text)}
                 label={_(msg`New handle`)}
-                placeholder={_(msg`e.g. alice`)}
+                placeholder={_(msg`e.g. kris`)}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -383,7 +383,7 @@ function OwnHandlePage({goToServiceHandle}: {goToServiceHandle: () => void}) {
             <TextField.Icon icon={AtIcon} />
             <Dialog.Input
               label={_(msg`New handle`)}
-              placeholder={_(msg`e.g. alice.com`)}
+              placeholder={_(msg`e.g. kris.darkworld`)}
               editable={!isPending}
               defaultValue={domain}
               onChangeText={text => {
