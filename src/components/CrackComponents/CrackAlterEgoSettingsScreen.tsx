@@ -150,9 +150,7 @@ export function CrackAlterEgoSettingsScreen({}: Props) {
             ]}>
             <ToggleRow
               title={_(msg`Enable alter ego`)}
-              description={_(
-                msg`Apply alter ego profile overlays on this device.`,
-              )}
+              description={_(msg`Client-sided btw.`)}
               name="alterEgoEnabled"
               value={alterEgoEnabled}
               onChange={next => update({alterEgoEnabled: next})}

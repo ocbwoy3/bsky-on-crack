@@ -120,7 +120,7 @@ export const crackSettingsSections: CrackSettingsSection[] = [
         type: 'button',
         id: 'openAlterEgo',
         label: 'Alter ego',
-        description: 'Overlay your profile with a custom alter ego record.',
+        description: 'Cause @ocbwoy3.dev identity crisis :D',
         buttonLabel: 'Configure',
       },
     ],
