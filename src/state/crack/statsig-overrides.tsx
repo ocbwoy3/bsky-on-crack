@@ -1,8 +1,7 @@
-import {useEffect} from 'react'
-
-import {type Gate, GATES} from '#/lib/statsig/gates'
-import {useDangerousSetGate} from '#/lib/statsig/statsig'
 import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
+
+// Statsig has been removed, so these are mocks/stubs.
+type Gate = string
 
 export function useStatsigGateOverrides(): Record<Gate, boolean> {
   const settings = useCrackSettings()
@@ -27,17 +26,6 @@ export function useSetStatsigGateOverride() {
 }
 
 export function StatsigGateOverridesBootstrap() {
-  const overrides = useStatsigGateOverrides()
-  const setGate = useDangerousSetGate()
-
-  useEffect(() => {
-    for (const gate of GATES) {
-      const value = overrides[gate]
-      if (typeof value === 'boolean') {
-        setGate(gate, value)
-      }
-    }
-  }, [overrides, setGate])
-
+  // Statsig is removed.
   return null
 }

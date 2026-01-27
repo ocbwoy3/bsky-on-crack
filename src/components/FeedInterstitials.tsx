@@ -7,9 +7,6 @@ import {useLingui} from '@lingui/react'
 import {useNavigation} from '@react-navigation/native'
 
 import {type NavigationProp} from '#/lib/routes/types'
-import {logEvent} from '#/lib/statsig/statsig'
-import {logger} from '#/logger'
-import {type MetricEvents} from '#/logger/metrics'
 import {useCrackSettings} from '#/state/preferences'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useGetPopularFeedsQuery} from '#/state/queries/feed'
@@ -39,6 +36,7 @@ import {TimesLarge_Stroke2_Corner0_Rounded as X} from '#/components/icons/Times'
 import {InlineLinkText} from '#/components/Link'
 import * as ProfileCard from '#/components/ProfileCard'
 import {Text} from '#/components/Typography'
+import {type Metrics, useAnalytics} from '#/analytics'
 import {IS_IOS} from '#/env'
 import type * as bsky from '#/types/bsky'
 import {FollowDialogWithoutGuide} from './ProgressGuide/FollowDialog'
@@ -441,6 +439,7 @@ export function ProfileGrid({
   isVisible?: boolean
 }) {
   const t = useTheme()
+  const ax = useAnalytics()
   const {_} = useLingui()
   const moderationOpts = useModerationOpts()
   const {gtMobile} = useBreakpoints()
@@ -457,12 +456,11 @@ export function ProfileGrid({
   const seenProfilesRef = useRef<Set<string>>(new Set())
   const containerRef = useRef<View>(null)
   const hasTrackedRef = useRef(false)
-  const logContext: MetricEvents['suggestedUser:seen']['logContext'] =
-    isFeedContext
-      ? 'InterstitialDiscover'
-      : isProfileHeaderContext
-        ? 'Profile'
-        : 'InterstitialProfile'
+  const logContext: Metrics['suggestedUser:seen']['logContext'] = isFeedContext
+    ? 'InterstitialDiscover'
+    : isProfileHeaderContext
+      ? 'Profile'
+      : 'InterstitialProfile'
 
   // Callback to fire seen events
   const fireSeen = useCallback(() => {
@@ -474,20 +472,16 @@ export function ProfileGrid({
     profilesToShow.forEach((profile, index) => {
       if (!seenProfilesRef.current.has(profile.did)) {
         seenProfilesRef.current.add(profile.did)
-        logger.metric(
-          'suggestedUser:seen',
-          {
-            logContext,
-            recId,
-            position: index,
-            suggestedDid: profile.did,
-            category: null,
-          },
-          {statsig: true},
-        )
+        ax.metric('suggestedUser:seen', {
+          logContext,
+          recId,
+          position: index,
+          suggestedDid: profile.did,
+          category: null,
+        })
       }
     })
-  }, [isLoading, error, profiles, maxLength, logContext, recId])
+  }, [ax, isLoading, error, profiles, maxLength, logContext, recId])
 
   // For profile header, fire when isVisible becomes true
   useEffect(() => {
@@ -572,7 +566,7 @@ export function ProfileGrid({
             <ProfileCard.Link
               profile={profile}
               onPress={() => {
-                logEvent('suggestedUser:press', {
+                ax.metric('suggestedUser:press', {
                   logContext: isFeedContext
                     ? 'InterstitialDiscover'
                     : 'InterstitialProfile',
@@ -595,7 +589,7 @@ export function ProfileGrid({
                         onPress={e => {
                           e.preventDefault()
                           onDismiss(profile.did)
-                          logEvent('suggestedUser:dismiss', {
+                          ax.metric('suggestedUser:dismiss', {
                             logContext: isFeedContext
                               ? 'InterstitialDiscover'
                               : 'InterstitialProfile',
@@ -663,7 +657,7 @@ export function ProfileGrid({
                       withIcon={false}
                       style={[a.rounded_sm]}
                       onFollow={() => {
-                        logEvent('suggestedUser:follow', {
+                        ax.metric('suggestedUser:follow', {
                           logContext: isFeedContext
                             ? 'InterstitialDiscover'
                             : 'InterstitialProfile',
@@ -685,7 +679,7 @@ export function ProfileGrid({
   // Use totalProfileCount (before dismissals) for minLength check on initial render.
   const profileCountForMinCheck = totalProfileCount ?? profiles.length
   if (error || (!isLoading && profileCountForMinCheck < minLength)) {
-    logger.debug(`Not enough profiles to show suggested follows`)
+    ax.logger.debug(`Not enough profiles to show suggested follows`)
     return null
   }
 
@@ -708,18 +702,14 @@ export function ProfileGrid({
         ]}
         pointerEvents={IS_IOS ? 'auto' : 'box-none'}>
         <Text style={[a.text_sm, a.font_semi_bold, t.atoms.text]}>
-          {isFeedContext ? (
-            <Trans>Suggested for you</Trans>
-          ) : (
-            <Trans>Similar accounts</Trans>
-          )}
+          <Trans>Suggested for you</Trans>
         </Text>
         {!isProfileHeaderContext && (
           <Button
             label={_(msg`See more suggested profiles`)}
             onPress={() => {
               followDialogControl.open()
-              logEvent('suggestedUser:seeMore', {
+              ax.metric('suggestedUser:seeMore', {
                 logContext: isFeedContext ? 'Explore' : 'Profile',
               })
             }}>
@@ -763,7 +753,7 @@ export function ProfileGrid({
               <SeeMoreSuggestedProfilesCard
                 onPress={() => {
                   followDialogControl.open()
-                  logger.metric('suggestedUser:seeMore', {
+                  ax.metric('suggestedUser:seeMore', {
                     logContext: 'Explore',
                   })
                 }}
@@ -801,9 +791,10 @@ function SeeMoreSuggestedProfilesCard({onPress}: {onPress: () => void}) {
   )
 }
 
+const numFeedsToDisplay = 3
 export function SuggestedFeeds() {
-  const numFeedsToDisplay = 3
   const t = useTheme()
+  const ax = useAnalytics()
   const {_} = useLingui()
   const {data, isLoading, error} = useGetPopularFeedsQuery({
     limit: numFeedsToDisplay,
@@ -836,7 +827,7 @@ export function SuggestedFeeds() {
           key={feed.uri}
           view={feed}
           onPress={() => {
-            logEvent('feed:interstitial:feedCard:press', {})
+            ax.metric('feed:interstitial:feedCard:press', {})
           }}>
           {({hovered, pressed}) => (
             <CardOuter

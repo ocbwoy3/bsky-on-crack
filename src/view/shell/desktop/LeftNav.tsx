@@ -169,7 +169,7 @@ function ProfileCard() {
                           style={[a.font_bold, a.text_sm, a.leading_snug]}
                           numberOfLines={1}>
                           {sanitizeDisplayName(
-                            displayProfile.displayName || displayProfile.handle,
+                            displayProfile.displayName || displayProfile.handle || '',
                           )}
                         </Text>
                         <Text
@@ -179,7 +179,7 @@ function ProfileCard() {
                             t.atoms.text_contrast_medium,
                           ]}
                           numberOfLines={1}>
-                          {sanitizeHandle(displayProfile.handle, '@')}
+                          {sanitizeHandle(displayProfile.handle || '', '@')}
                         </Text>
                       </View>
                       <EllipsisIcon

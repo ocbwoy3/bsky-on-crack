@@ -10,7 +10,6 @@ import {
   useVideoLibraryPermission,
 } from '#/lib/hooks/usePermissions'
 import {openCamera, openUnifiedPicker} from '#/lib/media/picker'
-import {logger} from '#/logger'
 import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useCrackSettings} from '#/state/preferences'
 import {useCurrentAccountProfile} from '#/state/queries/useCurrentAccountProfile'
@@ -23,11 +22,13 @@ import {Camera_Stroke2_Corner0_Rounded as CameraIcon} from '#/components/icons/C
 import {Image_Stroke2_Corner0_Rounded as ImageIcon} from '#/components/icons/Image'
 import {SubtleHover} from '#/components/SubtleHover'
 import {Text} from '#/components/Typography'
+import {useAnalytics} from '#/analytics'
 import {IS_NATIVE} from '#/env'
 
 export function ComposerPrompt() {
-  const {_} = useLingui()
   const t = useTheme()
+  const ax = useAnalytics()
+  const {_} = useLingui()
   const {openComposer} = useOpenComposer()
   const profile = useCurrentAccountProfile()
   const [hover, setHover] = useState(false)
@@ -37,12 +38,12 @@ export function ComposerPrompt() {
   const sheetWrapper = useSheetWrapper()
 
   const onPress = useCallback(() => {
-    logger.metric('composerPrompt:press', {})
+    ax.metric('composerPrompt:press', {})
     openComposer({})
-  }, [openComposer])
+  }, [ax, openComposer])
 
   const onPressImage = useCallback(async () => {
-    logger.metric('composerPrompt:gallery:press', {})
+    ax.metric('composerPrompt:gallery:press', {})
 
     // On web, open the composer with the gallery picker auto-opening
     if (!IS_NATIVE) {
@@ -89,10 +90,11 @@ export function ComposerPrompt() {
       }
     } catch (err: any) {
       if (!String(err).toLowerCase().includes('cancel')) {
-        logger.warn('Error opening image picker', {error: err})
+        ax.logger.error('Error opening image picker', {error: err})
       }
     }
   }, [
+    ax,
     openComposer,
     requestPhotoAccessIfNeeded,
     requestVideoAccessIfNeeded,
@@ -100,7 +102,7 @@ export function ComposerPrompt() {
   ])
 
   const onPressCamera = useCallback(async () => {
-    logger.metric('composerPrompt:camera:press', {})
+    ax.metric('composerPrompt:camera:press', {})
 
     try {
       if (!(await requestCameraAccessIfNeeded())) {
@@ -128,10 +130,10 @@ export function ComposerPrompt() {
       })
     } catch (err: any) {
       if (!String(err).toLowerCase().includes('cancel')) {
-        logger.warn('Error opening camera', {error: err})
+        ax.logger.error('Error opening camera', {error: err})
       }
     }
-  }, [openComposer, requestCameraAccessIfNeeded])
+  }, [ax, openComposer, requestCameraAccessIfNeeded])
 
   const displayProfile = useAlterEgoProfileFields({
     did: profile?.did || '',

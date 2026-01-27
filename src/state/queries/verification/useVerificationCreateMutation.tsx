@@ -2,7 +2,6 @@ import {type AppBskyActorDefs, type AppBskyActorGetProfile} from '@atproto/api'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 
 import {until} from '#/lib/async/until'
-import {logger} from '#/logger'
 import {updateProfileShadow} from '#/state/cache/profile-shadow'
 import {useUpdateProfileVerificationCache} from '#/state/queries/verification/useUpdateProfileVerificationCache'
 import {useAgent, useSession} from '#/state/session'
@@ -14,6 +13,7 @@ import {
   useCustomVerificationEnabled,
   useCustomVerificationTrusted,
 } from '#/state/verification/custom-verifiers'
+import {useAnalytics} from '#/analytics'
 import type * as bsky from '#/types/bsky'
 
 // ocbwoy3
@@ -57,6 +57,7 @@ function buildOptimisticVerificationState_ocbwoy3({
 }
 
 export function useVerificationCreateMutation() {
+  const ax = useAnalytics()
   const agent = useAgent()
   const qc = useQueryClient() // <-- ocbwoy3
   const {currentAccount} = useSession()
@@ -84,8 +85,8 @@ export function useVerificationCreateMutation() {
       )
       return {uri, createdAt}
     },
-    onSuccess({uri, createdAt}, {profile}) {
-      logger.metric('verification:create', {}, {statsig: true})
+    async onSuccess({uri, createdAt}, {profile}) {
+      ax.metric('verification:create', {})
       if (currentAccount) {
         // <-- ocbwoy3 (entire if block)
         const optimisticVerification = buildOptimisticVerificationState_ocbwoy3(
@@ -132,7 +133,10 @@ export function useVerificationCreateMutation() {
           )
           confirmed = true
         } catch (error) {
-          logger.error('verification:create reconcile failed', {
+          // logger.error('verification:create reconcile failed')
+          // Using ax.logger if available or just console.error or ignore as ax.logger might not be in scope here if ax is not used in this scope?
+          // ax is available in hook scope.
+          ax.logger.error('verification:create reconcile failed', {
             safeMessage: error,
           })
         }
