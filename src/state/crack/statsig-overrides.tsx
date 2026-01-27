@@ -1,6 +1,8 @@
-import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
+import {useEffect} from 'react'
 
-// Statsig has been removed, so these are mocks/stubs.
+import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
+import {features as growthbook} from '#/analytics/features'
+
 type Gate = string
 
 export function useStatsigGateOverrides(): Record<Gate, boolean> {
@@ -26,6 +28,16 @@ export function useSetStatsigGateOverride() {
 }
 
 export function StatsigGateOverridesBootstrap() {
-  // Statsig is removed.
+  const settings = useCrackSettings()
+
+  useEffect(() => {
+    const overrides = settings.statsigGateOverrides ?? {}
+    const forced = new Map<string, boolean>()
+    Object.entries(overrides).forEach(([gate, value]) => {
+      forced.set(gate, value)
+    })
+    growthbook.setForcedFeatures(forced)
+  }, [settings.statsigGateOverrides])
+
   return null
 }

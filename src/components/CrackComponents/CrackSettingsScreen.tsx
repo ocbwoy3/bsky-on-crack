@@ -1,7 +1,13 @@
-import {Fragment} from 'react'
-import {type ComponentType} from 'react'
+import {
+  type ComponentType,
+  Fragment,
+  useCallback,
+  useEffect,
+  useReducer,
+} from 'react'
 import {View} from 'react-native'
-import {Trans} from '@lingui/macro'
+import {msg, Trans} from '@lingui/macro'
+import {useLingui} from '@lingui/react'
 import {useNavigation} from '@react-navigation/native'
 import {type NativeStackScreenProps} from '@react-navigation/native-stack'
 
@@ -9,6 +15,10 @@ import {
   type CommonNavigatorParams,
   type NavigationProp,
 } from '#/lib/routes/types'
+import {
+  useSetStatsigGateOverride,
+  useStatsigGateOverrides,
+} from '#/state/crack/statsig-overrides'
 import {emitOpenSettingsHelpModal, emitOpenWelcomeModal} from '#/state/events'
 import {
   type CrackSettings,
@@ -31,6 +41,11 @@ import {Sparkle_Stroke2_Corner0_Rounded as SparkleIcon} from '#/components/icons
 import {Window_Stroke2_Corner2_Rounded as WindowIcon} from '#/components/icons/Window'
 import * as Layout from '#/components/Layout'
 import {Text} from '#/components/Typography'
+import {useAnalytics} from '#/analytics'
+import {
+  Features as GrowthbookFeatures,
+  features as growthbook,
+} from '#/analytics/features'
 import {ShieldCheck_Stroke2_Corner0_Rounded as ShieldIcon} from '../icons/Shield'
 
 type Props = NativeStackScreenProps<CommonNavigatorParams, 'CrackSettings'>
@@ -87,7 +102,7 @@ export function CrackSettingsScreen({}: Props) {
             const visibleItems = section.items.filter(
               item => !item.predicate || item.predicate(),
             )
-            if (!visibleItems.length) return null
+            if (!visibleItems.length && section.id !== 'statsig') return null
             return (
               <View key={section.id} style={[sectionIndex > 0 && a.pt_2xl]}>
                 <Text
@@ -106,29 +121,34 @@ export function CrackSettingsScreen({}: Props) {
                     a.overflow_hidden,
                     t.atoms.bg_contrast_25,
                   ]}>
-                  {visibleItems.map((item, itemIndex) => (
-                    <Fragment key={item.type === 'toggle' ? item.key : item.id}>
-                      {itemIndex > 0 && <Divider />}
-                      {item.type === 'toggle' ? (
-                        <ToggleRow
-                          icon={getItemIcon(item)}
-                          title={item.label}
-                          description={item.description}
-                          name={item.key}
-                          //@ts-expect-error
-                          value={settings[item.key]!}
-                          onChange={next => onToggleSetting(item.key, next)}
-                        />
-                      ) : (
-                        <ActionRow
-                          icon={sectionIcons[section.id] ?? WindowIcon}
-                          title={item.label}
-                          description={item.description}
-                          onPress={() => onPressButton(item)}
-                        />
-                      )}
-                    </Fragment>
-                  ))}
+                  {section.id === 'statsig' ? (
+                    <FeatureGateOverrides />
+                  ) : (
+                    visibleItems.map((item, itemIndex) => (
+                      <Fragment
+                        key={item.type === 'toggle' ? item.key : item.id}>
+                        {itemIndex > 0 && <Divider />}
+                        {item.type === 'toggle' ? (
+                          <ToggleRow
+                            icon={getItemIcon(item)}
+                            title={item.label}
+                            description={item.description}
+                            name={item.key}
+                            //@ts-expect-error
+                            value={settings[item.key]!}
+                            onChange={next => onToggleSetting(item.key, next)}
+                          />
+                        ) : (
+                          <ActionRow
+                            icon={sectionIcons[section.id] ?? WindowIcon}
+                            title={item.label}
+                            description={item.description}
+                            onPress={() => onPressButton(item)}
+                          />
+                        )}
+                      </Fragment>
+                    ))
+                  )}
                 </View>
               </View>
             )
@@ -161,6 +181,7 @@ function ToggleRow({
   value,
   onChange,
   disabled = false,
+  status,
 }: {
   icon: ComponentType<SVGIconProps>
   title: string
@@ -169,6 +190,7 @@ function ToggleRow({
   value: boolean
   onChange: (next: boolean) => void
   disabled?: boolean
+  status?: string
 }) {
   const t = useTheme()
 
@@ -189,6 +211,11 @@ function ToggleRow({
           <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
             {description}
           </Text>
+          {status && (
+            <Text style={[a.text_xs, t.atoms.text_contrast_medium]}>
+              {status}
+            </Text>
+          )}
         </View>
       </View>
       <Toggle.Item
@@ -208,11 +235,13 @@ function ActionRow({
   title,
   description,
   onPress,
+  disabled = false,
 }: {
   icon: ComponentType<SVGIconProps>
   title: string
   description: string
   onPress: () => void
+  disabled?: boolean
 }) {
   const t = useTheme()
 
@@ -222,7 +251,8 @@ function ActionRow({
       variant="ghost"
       color="secondary"
       style={[a.w_full, {backgroundColor: 'transparent'}]}
-      onPress={onPress}>
+      onPress={onPress}
+      disabled={disabled}>
       {state => (
         <View
           style={[
@@ -232,7 +262,8 @@ function ActionRow({
             a.justify_between,
             a.p_lg,
             a.gap_sm,
-            (state.hovered || state.pressed) && [t.atoms.bg_contrast_50],
+            !state.disabled &&
+              (state.hovered || state.pressed) && [t.atoms.bg_contrast_50],
           ]}>
           <View style={[a.flex_row, a.align_center, a.gap_md, a.flex_1]}>
             <Icon size="md" style={[t.atoms.text_contrast_medium]} />
@@ -250,5 +281,69 @@ function ActionRow({
         </View>
       )}
     </Button>
+  )
+}
+
+// DO NOT ADD DESCRIPTION OR LABEL. USE RAW LABEL ONLY
+const FEATURE_GATES: GrowthbookFeatures[] = [
+  GrowthbookFeatures.DebugFeedContext,
+  GrowthbookFeatures.IsBskyTeam,
+  GrowthbookFeatures.ImportContactsOnboardingDisable,
+  GrowthbookFeatures.ImportContactsSettingsDisable,
+  GrowthbookFeatures.LiveNowBetaDisable,
+]
+
+function FeatureGateOverrides() {
+  const {_} = useLingui()
+  const overrides = useStatsigGateOverrides()
+  const setOverride = useSetStatsigGateOverride()
+  const {update} = useCrackSettingsApi()
+  const [, forceUpdate] = useReducer(count => count + 1, 0)
+
+  useEffect(() => {
+    return growthbook.subscribe(() => {
+      forceUpdate()
+    })
+  }, [])
+
+  const gateOverrides = overrides ?? {}
+  const hasOverrides = Object.keys(gateOverrides).length > 0
+
+  const handleClearOverrides = useCallback(() => {
+    update({statsigGateOverrides: {}})
+  }, [update])
+
+  const ax = useAnalytics()
+
+  return (
+    <View>
+      {FEATURE_GATES.map((gate, index) => {
+        const value = ax.features.enabled(gate)
+        const status = value ? _(msg`Enabled`) : _(msg`Disabled`)
+
+        return (
+          <Fragment key={gate}>
+            {index > 0 && <Divider />}
+            <ToggleRow
+              icon={FilterIcon}
+              title={gate}
+              description={''}
+              status={status}
+              name={gate}
+              value={value}
+              onChange={next => setOverride(gate, next)}
+            />
+          </Fragment>
+        )
+      })}
+      <Divider />
+      <ActionRow
+        icon={FilterIcon}
+        title={_(msg`Clear gate overrides`)}
+        description={_(msg`Revert to remote gate values.`)}
+        onPress={handleClearOverrides}
+        disabled={!hasOverrides}
+      />
+    </View>
   )
 }

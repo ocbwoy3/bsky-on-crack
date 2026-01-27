@@ -1,19 +1,11 @@
 import React from 'react'
 
 import {parseAlterEgoUri} from '#/lib/crack/alter-ego'
-import {logger} from '#/logger'
-import {
-  createCrackSettingsPreference,
-  fetchCrackSettingsPreference,
-  mergeCrackSettingsPreference,
-  putCrackSettingsPreference,
-} from '#/state/crack/settings-preferences'
 import * as persisted from '#/state/persisted'
 import {
   type CrackSettings,
   crackSettingsDefaults,
 } from '#/state/preferences/crack-settings-api'
-import {useAgent, useSession} from '#/state/session'
 import {IS_WEB} from '#/env'
 
 const defaultSettings = crackSettingsDefaults
@@ -58,14 +50,9 @@ function resolveSettings(settings?: persisted.Schema['crackSettings']) {
 }
 
 export function Provider({children}: React.PropsWithChildren<{}>) {
-  const agent = useAgent()
-  const {currentAccount, hasSession} = useSession()
   const [state, setState] = React.useState<CrackSettings>(() =>
     resolveSettings(persisted.get('crackSettings')),
   )
-  const [isRemoteLoaded, setIsRemoteLoaded] = React.useState(false)
-  const pendingRemoteSync = React.useRef<CrackSettings | null>(null)
-
   const persistState = React.useCallback(
     (next: CrackSettings) => {
       setState(next)
@@ -77,22 +64,7 @@ export function Provider({children}: React.PropsWithChildren<{}>) {
     [setState],
   )
 
-  const queueRemoteSync = React.useCallback(
-    (next: CrackSettings) => {
-      if (!hasSession || !agent?.did) {
-        return
-      }
-      if (!isRemoteLoaded) {
-        pendingRemoteSync.current = next
-        return
-      }
-      const preference = createCrackSettingsPreference(next)
-      putCrackSettingsPreference(agent, preference).catch(error => {
-        logger.error('Failed to sync crack settings preference', {error})
-      })
-    },
-    [agent, hasSession, isRemoteLoaded],
-  )
+  const queueRemoteSync = React.useCallback(() => {}, [])
 
   const set = React.useCallback(
     (next: CrackSettings) => {
@@ -128,39 +100,6 @@ export function Provider({children}: React.PropsWithChildren<{}>) {
       persistState(resolveSettings(undefined))
     }
   }, [persistState])
-
-  React.useEffect(() => {
-    let cancelled = false
-    const syncFromRemote = async () => {
-      if (!hasSession || !agent?.did || !currentAccount?.did) {
-        return
-      }
-      const pref = await fetchCrackSettingsPreference(agent)
-      if (cancelled) return
-      if (pref) {
-        setState(prev => {
-          const merged = mergeCrackSettingsPreference(prev, pref)
-          persisted.write('crackSettings', merged)
-          if (typeof merged.kawaiiMode === 'boolean') {
-            persisted.write('kawaii', merged.kawaiiMode)
-          }
-          return merged
-        })
-      }
-      setIsRemoteLoaded(true)
-      if (pendingRemoteSync.current) {
-        queueRemoteSync(pendingRemoteSync.current)
-        pendingRemoteSync.current = null
-      }
-    }
-    syncFromRemote().catch(error => {
-      logger.error('Failed to load crack settings preference', {error})
-      setIsRemoteLoaded(true)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [agent, currentAccount?.did, hasSession, queueRemoteSync])
 
   React.useEffect(() => {
     if (!IS_WEB || typeof window === 'undefined') return

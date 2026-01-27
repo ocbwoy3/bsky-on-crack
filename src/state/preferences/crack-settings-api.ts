@@ -169,8 +169,8 @@ export const crackSettingsSections: CrackSettingsSection[] = [
   },
   {
     id: 'statsig',
-    title: 'Statsig',
-    description: 'Feature gate values (read-only).',
+    title: 'Feature gates',
+    description: 'Feature gate editor',
     items: [],
   },
 ]

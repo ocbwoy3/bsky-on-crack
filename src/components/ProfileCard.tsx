@@ -21,6 +21,7 @@ import {NON_BREAKING_SPACE} from '#/lib/strings/constants'
 import {sanitizeDisplayName} from '#/lib/strings/display-names'
 import {sanitizeHandle} from '#/lib/strings/handles'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useProfileFollowMutationQueue} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
 import * as Toast from '#/view/com/util/Toast'
@@ -452,12 +453,14 @@ export function Description({
   numberOfLines?: number
 } & TextStyleProp) {
   const profile = useProfileShadow(profileUnshadowed)
+  const displayProfile = useAlterEgoProfileFields(profile)
+  const descriptionText = (displayProfile.description ?? '') as string
   const rt = useMemo(() => {
-    if (!('description' in profile)) return
-    const nextRt = new RichTextApi({text: profile.description || ''})
+    if (!descriptionText) return
+    const nextRt = new RichTextApi({text: descriptionText})
     nextRt.detectFacetsWithoutResolution()
     return nextRt
-  }, [profile])
+  }, [descriptionText])
   if (!rt) return null
   if (
     profile.viewer &&

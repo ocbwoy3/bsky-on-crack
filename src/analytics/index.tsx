@@ -2,6 +2,7 @@ import {createContext, useContext, useEffect, useMemo} from 'react'
 import {Platform} from 'react-native'
 
 import {Logger} from '#/logger'
+import {useStatsigGateOverrides} from '#/state/crack/statsig-overrides'
 import {
   Features,
   features as feats,
@@ -75,7 +76,9 @@ function createLogger(
     log: logger.log.bind(logger),
     warn: logger.warn.bind(logger),
     error: logger.error.bind(logger),
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     useChild: (context: Exclude<Logger['context'], undefined>) => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       return useMemo(() => createLogger(context, metadata), [context, metadata])
     },
     Context: Logger.Context,
@@ -194,6 +197,7 @@ export function AnalyticsFeaturesContext({
         variationId: result.key,
       })
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parentContext.metric])
 
   const childContext = useMemo<AnalyticsContextType>(() => {
@@ -228,5 +232,32 @@ export function useAnalytics() {
       'useAnalytics must be used within an AnalyticsFeaturesContext',
     )
   }
-  return ctx as AnalyticsContextType
+  const overrides = useStatsigGateOverrides()
+  const patchedFeatures = useMemo(() => {
+    if (!overrides || Object.keys(overrides).length === 0) {
+      return ctx.features
+    }
+    return {
+      //@ts-expect-error
+      ...ctx.features,
+      enabled(feature: Features) {
+        const override = overrides[feature as string]
+        if (typeof override === 'boolean') {
+          console.log(
+            '[Bluesky On Crack] [useAnalytics] OVERRIDE!',
+            feature,
+            override,
+          )
+          return override
+        }
+        //@ts-expect-error
+        return ctx.features.enabled(feature)
+      },
+    }
+  }, [ctx.features, overrides])
+
+  return useMemo(
+    () => ({...ctx, features: patchedFeatures}),
+    [ctx, patchedFeatures],
+  ) as AnalyticsContextType
 }
