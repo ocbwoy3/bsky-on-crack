@@ -334,7 +334,7 @@ function ProfileScreenLoaded({
       isInvalidHandle(profile.handle)
         ? undefined
         : profile.handle
-    openComposer({mention})
+    openComposer({mention, logContext: 'ProfileFeed'})
   }
 
   const onPageSelected = (i: number) => {
@@ -436,7 +436,8 @@ function ProfileScreenLoaded({
                     ? {
                         label: _(msg`Write a post`),
                         text: _(msg`Write a post`),
-                        onPress: () => openComposer({}),
+                        onPress: () =>
+                          openComposer({logContext: 'ProfileFeed'}),
                         size: 'small',
                         color: 'primary',
                       }
@@ -476,7 +477,8 @@ function ProfileScreenLoaded({
                     ? {
                         label: _(msg`Post a photo`),
                         text: _(msg`Post a photo`),
-                        onPress: () => openComposer({}),
+                        onPress: () =>
+                          openComposer({logContext: 'ProfileFeed'}),
                         size: 'small',
                         color: 'primary',
                       }
@@ -502,7 +504,8 @@ function ProfileScreenLoaded({
                     ? {
                         label: _(msg`Post a video`),
                         text: _(msg`Post a video`),
-                        onPress: () => openComposer({}),
+                        onPress: () =>
+                          openComposer({logContext: 'ProfileFeed'}),
                         size: 'small',
                         color: 'primary',
                       }

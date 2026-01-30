@@ -169,7 +169,9 @@ function ProfileCard() {
                           style={[a.font_bold, a.text_sm, a.leading_snug]}
                           numberOfLines={1}>
                           {sanitizeDisplayName(
-                            displayProfile.displayName || displayProfile.handle || '',
+                            displayProfile.displayName ||
+                              displayProfile.handle ||
+                              '',
                           )}
                         </Text>
                         <Text
@@ -585,7 +587,7 @@ function ComposeBtn() {
   }
 
   const onPressCompose = async () =>
-    openComposer({mention: await getProfileHandle()})
+    openComposer({mention: await getProfileHandle(), logContext: 'Fab'})
 
   if (leftNavMinimal) {
     return null
