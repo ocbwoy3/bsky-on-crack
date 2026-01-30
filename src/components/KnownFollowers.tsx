@@ -10,6 +10,7 @@ import {useLingui} from '@lingui/react'
 
 import {makeProfileLink} from '#/lib/routes/links'
 import {sanitizeDisplayName} from '#/lib/strings/display-names'
+import {useAlterEgoProfileFieldsOfManyDids} from '#/state/crack/alter-ego'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {atoms as a, useTheme} from '#/alf'
 import {Link, type LinkProps} from '#/components/Link'
@@ -114,6 +115,9 @@ function KnownFollowersInner({
 
   // Does not have blocks applied. Always >= slices.length
   const serverCount = cachedKnownFollowers.count
+  const alterEgos = useAlterEgoProfileFieldsOfManyDids(
+    slice.map(b => b.profile.did),
+  )
 
   /*
    * We check above too, but here for clarity and a reminder to _check for
@@ -165,7 +169,7 @@ function KnownFollowersInner({
                 ]}>
                 <UserAvatar
                   size={SIZE}
-                  avatar={prof.avatar}
+                  avatar={alterEgos[i].avatar ?? prof.avatar}
                   moderation={moderation.ui('avatar')}
                   type={prof.associated?.labeler ? 'labeler' : 'user'}
                   noBorder
@@ -193,11 +197,11 @@ function KnownFollowersInner({
                 <Trans>
                   Followed by{' '}
                   <Text emoji key={slice[0].profile.did} style={textStyle}>
-                    {slice[0].profile.displayName}
+                    {alterEgos[0].displayName ?? slice[0].profile.displayName}
                   </Text>
                   ,{' '}
                   <Text emoji key={slice[1].profile.did} style={textStyle}>
-                    {slice[1].profile.displayName}
+                    {alterEgos[1].displayName ?? slice[1].profile.displayName}
                   </Text>
                   , and{' '}
                   <Plural
@@ -211,11 +215,11 @@ function KnownFollowersInner({
                 <Trans>
                   Followed by{' '}
                   <Text emoji key={slice[0].profile.did} style={textStyle}>
-                    {slice[0].profile.displayName}
+                    {alterEgos[0].displayName ?? slice[0].profile.displayName}
                   </Text>{' '}
                   and{' '}
                   <Text emoji key={slice[1].profile.did} style={textStyle}>
-                    {slice[1].profile.displayName}
+                    {alterEgos[1].displayName ?? slice[1].profile.displayName}
                   </Text>
                 </Trans>
               )
@@ -224,7 +228,7 @@ function KnownFollowersInner({
               <Trans>
                 Followed by{' '}
                 <Text emoji key={slice[0].profile.did} style={textStyle}>
-                  {slice[0].profile.displayName}
+                  {alterEgos[0].displayName ?? slice[0].profile.displayName}
                 </Text>{' '}
                 and{' '}
                 <Plural
@@ -238,7 +242,7 @@ function KnownFollowersInner({
               <Trans>
                 Followed by{' '}
                 <Text emoji key={slice[0].profile.did} style={textStyle}>
-                  {slice[0].profile.displayName}
+                  {alterEgos[0].displayName ?? slice[0].profile.displayName}
                 </Text>
               </Trans>
             )}

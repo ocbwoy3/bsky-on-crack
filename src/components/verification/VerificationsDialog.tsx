@@ -5,6 +5,7 @@ import {useLingui} from '@lingui/react'
 
 import {urls} from '#/lib/constants'
 import {getUserDisplayName} from '#/lib/getUserDisplayName'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useProfileQuery} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
@@ -63,7 +64,8 @@ function Inner({
   const effectiveVerificationState =
     customVerificationState ?? profile.verification
 
-  const userName = getUserDisplayName(profile)
+  const displayProfile = useAlterEgoProfileFields(profile)
+  const userName = getUserDisplayName({...profile, ...displayProfile})
   const label = state.profile.isViewer
     ? state.profile.isVerified
       ? _(msg`You are verified`)

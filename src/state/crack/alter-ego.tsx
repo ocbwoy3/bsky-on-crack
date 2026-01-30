@@ -9,7 +9,11 @@ import {
   validateAlterEgoRecord,
 } from '#/lib/crack/alter-ego'
 import {logger} from '#/logger'
-import {useCrackSettings, useCrackSettingsApi} from '#/state/preferences'
+import {
+  type CrackSettings,
+  useCrackSettings,
+  useCrackSettingsApi,
+} from '#/state/preferences'
 import {useAgent} from '#/state/session'
 
 type AlterEgoCacheListener = () => void
@@ -240,17 +244,49 @@ export function useAlterEgoProfileFields<T extends {did: string}>(
   }
 }
 
+export function useAlterEgoProfileFieldsOfManyDids(dids: string[]): {
+  avatar?: string
+  banner?: string
+  displayName?: string
+  description?: string
+  handle?: string
+}[] {
+  const settings = useCrackSettings()
+  const {alterEgoEnabled, alterEgoByDid, alterEgoRecords} = settings
+  return useMemo(() => {
+    if (!alterEgoEnabled) {
+      return dids.map(() => ({}))
+    }
+    return dids.map(did => {
+      const uri = alterEgoByDid?.[did]
+      const overlay = uri ? alterEgoRecords?.[uri] : undefined
+      return {
+        avatar: overlay?.avatar,
+        banner: overlay?.banner,
+        displayName: overlay?.displayName,
+        description: overlay?.description,
+        handle: overlay?.handle,
+      }
+    })
+  }, [dids, alterEgoByDid, alterEgoEnabled, alterEgoRecords])
+}
+
 export function useSetActiveAlterEgo() {
   const settings = useCrackSettings()
   const {update} = useCrackSettingsApi()
-  return (did: string, uri: string | null) => {
+  return (did: string, uri: string | null, options?: {skipUri?: boolean}) => {
     const nextByDid = {...(settings.alterEgoByDid ?? {})}
     if (uri) {
       nextByDid[did] = uri
-      update({alterEgoByDid: nextByDid, alterEgoUri: uri})
     } else {
       delete nextByDid[did]
-      update({alterEgoByDid: nextByDid, alterEgoUri: undefined})
     }
+    const patch: Partial<CrackSettings> = {
+      alterEgoByDid: nextByDid,
+    }
+    if (!options?.skipUri) {
+      patch.alterEgoUri = uri ?? undefined
+    }
+    update(patch)
   }
 }

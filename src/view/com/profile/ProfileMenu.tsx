@@ -13,6 +13,7 @@ import {shareText, shareUrl} from '#/lib/sharing'
 import {toShareUrl} from '#/lib/strings/url-helpers'
 import {type Shadow} from '#/state/cache/types'
 import {useModalControls} from '#/state/modals'
+import {useCrackSettings} from '#/state/preferences'
 import {Nux, useNux, useSaveNux} from '#/state/queries/nuxs'
 import {
   RQKEY as profileQueryKey,
@@ -31,6 +32,7 @@ import {EventStopper} from '#/view/com/util/EventStopper'
 import * as Toast from '#/view/com/util/Toast'
 import {atoms as a, useTheme} from '#/alf'
 import {Button, ButtonIcon} from '#/components/Button'
+import {ForceAlterEgoDialog} from '#/components/crack/ForceAlterEgoDialog'
 import {useDialogControl} from '#/components/Dialog'
 import {StarterPackDialog} from '#/components/dialogs/StarterPackDialog'
 import {ArrowOutOfBoxModified_Stroke2_Corner2_Rounded as ArrowOutOfBoxIcon} from '#/components/icons/ArrowOutOfBox'
@@ -50,6 +52,7 @@ import {
   PersonX_Stroke2_Corner0_Rounded as PersonX,
 } from '#/components/icons/Person'
 import {PlusLarge_Stroke2_Corner0_Rounded as Plus} from '#/components/icons/Plus'
+import {Sparkle_Stroke2_Corner0_Rounded as SparkleIcon} from '#/components/icons/Sparkle'
 import {SpeakerVolumeFull_Stroke2_Corner0_Rounded as Unmute} from '#/components/icons/Speaker'
 import {StarterPack} from '#/components/icons/StarterPack'
 import {EditLiveDialog} from '#/components/live/EditLiveDialog'
@@ -79,6 +82,7 @@ let ProfileMenu = ({
   const ax = useAnalytics()
   const {_} = useLingui()
   const {currentAccount, hasSession} = useSession()
+  const crackSettings = useCrackSettings()
   const {openModal} = useModalControls()
   const reportDialogControl = useReportDialogControl()
   const queryClient = useQueryClient()
@@ -95,6 +99,7 @@ let ProfileMenu = ({
   const {trustedSet, addTrusted, removeTrusted} =
     useCustomVerificationTrustedList()
   const canGoLive = useCanGoLive()
+  const alterEgoEnabled = Boolean(crackSettings.alterEgoEnabled)
   const status = useActorStatus(profile)
   const statusNudge = useNux(Nux.LiveNowBetaNudge)
   const statusNudgeActive =
@@ -116,6 +121,7 @@ let ProfileMenu = ({
   const goLiveDialogControl = useDialogControl()
   const goLiveDisabledDialogControl = useDialogControl()
   const addToStarterPacksDialogControl = useDialogControl()
+  const forceAlterEgoDialogControl = useDialogControl()
 
   const showLoggedOutWarning = React.useMemo(() => {
     return (
@@ -133,7 +139,7 @@ let ProfileMenu = ({
   const onPressAddToStarterPacks = React.useCallback(() => {
     ax.metric('profile:addToStarterPack', {})
     addToStarterPacksDialogControl.open()
-  }, [addToStarterPacksDialogControl])
+  }, [addToStarterPacksDialogControl, ax])
 
   const onPressShare = React.useCallback(() => {
     shareUrl(toShareUrl(makeProfileLink(profile)))
@@ -338,6 +344,17 @@ let ProfileMenu = ({
                       </Menu.Item>
                     )}
                   </>
+                )}
+                {alterEgoEnabled && !isSelf && (
+                  <Menu.Item
+                    testID="profileHeaderDropdownForceAlterEgoBtn"
+                    label={_(msg`Force alter ego`)}
+                    onPress={() => forceAlterEgoDialogControl.open()}>
+                    <Menu.ItemText>
+                      <Trans>Force alter ego</Trans>
+                    </Menu.ItemText>
+                    <Menu.ItemIcon icon={SparkleIcon} />
+                  </Menu.Item>
                 )}
                 <Menu.Item
                   testID="profileHeaderDropdownStarterPackAddRemoveBtn"
@@ -555,6 +572,12 @@ let ProfileMenu = ({
       <StarterPackDialog
         control={addToStarterPacksDialogControl}
         targetDid={profile.did}
+      />
+
+      <ForceAlterEgoDialog
+        control={forceAlterEgoDialogControl}
+        targetDid={profile.did}
+        targetHandle={profile.handle ?? profile.did}
       />
 
       <ReportDialog
