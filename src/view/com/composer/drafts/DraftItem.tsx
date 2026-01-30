@@ -6,6 +6,7 @@ import {useLingui} from '@lingui/react'
 
 import {createSanitizedDisplayName} from '#/lib/moderation/create-sanitized-display-name'
 import {sanitizeHandle} from '#/lib/strings/handles'
+import {useAlterEgoProfileFields} from '#/state/crack/alter-ego'
 import {useCurrentAccountProfile} from '#/state/queries/useCurrentAccountProfile'
 import {logger} from '#/view/com/composer/drafts/state/logger'
 import {TimeElapsed} from '#/view/com/util/TimeElapsed'
@@ -110,11 +111,16 @@ function DraftPostRow({
   const {_} = useLingui()
   const t = useTheme()
   const profile = useCurrentAccountProfile()
+  const displayProfile = useAlterEgoProfileFields({did: profile?.did || ''})
 
   return (
     <View style={[a.flex_row, a.gap_sm]}>
       <View style={[a.align_center]}>
-        <UserAvatar type="user" size={42} avatar={profile?.avatar} />
+        <UserAvatar
+          type="user"
+          size={42}
+          avatar={displayProfile?.avatar ?? profile?.avatar}
+        />
         {!isLast && (
           <View
             style={[
@@ -143,7 +149,7 @@ function DraftPostRow({
                     a.leading_snug,
                   ]}
                   numberOfLines={1}>
-                  {createSanitizedDisplayName(profile)}
+                  {createSanitizedDisplayName({...profile, ...displayProfile})}
                 </Text>
                 <Text
                   style={[
@@ -152,7 +158,7 @@ function DraftPostRow({
                     a.leading_snug,
                   ]}
                   numberOfLines={1}>
-                  {sanitizeHandle(profile.handle)}
+                  {sanitizeHandle(displayProfile.handle ?? profile.handle)}
                 </Text>
                 <Text
                   style={[
